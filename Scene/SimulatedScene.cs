@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace ParkSimulatorCore
+namespace ParkSimulatorCore.Scene
 {
     public class SimulatedScene
     {

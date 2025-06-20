@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ParkSimulatorCore.Components
+namespace ParkSimulatorCore.Scene.Components
 {
     public class Location : Component
     {

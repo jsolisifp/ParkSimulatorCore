@@ -5,8 +5,6 @@ VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParkSimulatorCore", "ParkSimulatorCore.csproj", "{3AAAD501-AB4D-45E8-A972-8F5B0922ED34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParkSimulatorStorage", "..\ParkSimulatorStorage\ParkSimulatorStorage.csproj", "{ADC37164-C4B3-48A0-BE51-5E20C841ABE9}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{3AAAD501-AB4D-45E8-A972-8F5B0922ED34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3AAAD501-AB4D-45E8-A972-8F5B0922ED34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3AAAD501-AB4D-45E8-A972-8F5B0922ED34}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADC37164-C4B3-48A0-BE51-5E20C841ABE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADC37164-C4B3-48A0-BE51-5E20C841ABE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADC37164-C4B3-48A0-BE51-5E20C841ABE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADC37164-C4B3-48A0-BE51-5E20C841ABE9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,4 @@
-﻿namespace ParkSimulatorCore
+﻿namespace ParkSimulatorCore.Scene
 {
     public class SimulatedObject
     {
@@ -67,7 +67,7 @@
 
         public T? GetComponent<T>() where T: Component
         {
-            T? c = (T?)components.Find((Component c) => c.GetType() == typeof(T));
+            T? c = (T?)components.Find((c) => c.GetType() == typeof(T));
 
             return c;
         }
