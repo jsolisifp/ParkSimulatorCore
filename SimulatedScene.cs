@@ -1,4 +1,6 @@
-﻿namespace ParkSimulatorCore
+﻿using System.Collections.ObjectModel;
+
+namespace ParkSimulatorCore
 {
     public class SimulatedScene
     {
@@ -43,9 +45,9 @@
             }
         }
 
-        public List<SimulatedObject> GetSimulatedObjects()
+        public ReadOnlyCollection<SimulatedObject> GetSimulatedObjects()
         {
-            return objects;
+            return objects.AsReadOnly<SimulatedObject>();
         }
 
     }
