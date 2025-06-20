@@ -1,0 +1,55 @@
+﻿namespace ParkSimulatorCore
+{
+    internal class SimulatedScene
+    {
+        List<SimulatedObject> objects;
+
+        public string name;
+
+        public SimulatedScene()
+        {
+            objects = new List<SimulatedObject>();
+            name = "";
+        }
+
+        public void AddSimulatedObject(SimulatedObject so)
+        {
+            objects.Add(so);
+        }
+
+        public void RemoveSimulatedObject(SimulatedObject so)
+        {
+            objects.Remove(so);
+        }
+
+        public void Start()
+        {
+            for (int i = 0; i < objects.Count; i++)
+            {
+                objects[i].Start();
+            }
+        }
+
+        public void Stop()
+        {
+            for (int i = 0; i < objects.Count; i++)
+            {
+                objects[i].Stop();
+            }
+        }
+
+        public void Step(float deltaTime)
+        {
+            for (int i = 0; i < objects.Count; i++)
+            {
+                objects[i].Step(deltaTime);
+            }
+        }
+
+        public List<SimulatedObject> GetSimulatedObjects()
+        {
+            return objects;
+        }
+
+    }
+}
