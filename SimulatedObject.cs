@@ -7,16 +7,12 @@
 
         List<Component> components;
 
-        public Location? location;
-
         public SimulatedObject()
         {
             name = "";
             active = false;
 
             components = new List<Component>();
-
-            location = null;
 
         }
 
