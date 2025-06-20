@@ -2,7 +2,7 @@
 
 namespace ParkSimulatorCore
 {
-    internal class Location : Component
+    public class Location : Component
     {
         public Vector3 coordinates;
 

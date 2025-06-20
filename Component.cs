@@ -1,6 +1,6 @@
 ﻿namespace ParkSimulatorCore
 {
-    internal abstract class Component
+    public abstract class Component
     {
         public bool active = false;
 

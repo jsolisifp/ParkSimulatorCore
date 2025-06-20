@@ -1,6 +1,6 @@
 ﻿namespace ParkSimulatorCore
 {
-    internal class SimulatedObject
+    public class SimulatedObject
     {
         public string name;
         public bool active;
@@ -50,22 +50,12 @@
 
         public void AddComponent(Component c)
         {
-            if(c.GetType().Equals(typeof(Location)))
-            {
-                location = (Location)c;
-            }
-
             components.Add(c);
             c.SetSimulatedObject(this);
         }
 
         public void RemoveComponent(Component c)
         {
-            if (c.GetType().Equals(typeof(Location)))
-            {
-                location = null;
-            }
-
             components.Remove(c);
             c.SetSimulatedObject(null);
         }

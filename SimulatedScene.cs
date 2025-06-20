@@ -1,15 +1,12 @@
 ﻿namespace ParkSimulatorCore
 {
-    internal class SimulatedScene
+    public class SimulatedScene
     {
         List<SimulatedObject> objects;
-
-        public string name;
 
         public SimulatedScene()
         {
             objects = new List<SimulatedObject>();
-            name = "";
         }
 
         public void AddSimulatedObject(SimulatedObject so)
