@@ -2,15 +2,15 @@
 {
     public class SimulatedObject
     {
-        public string name;
-        public bool active;
+        public string Name { get; set; }
+        public bool Active { get; set; }
 
         List<Component> components;
 
         public SimulatedObject()
         {
-            name = "";
-            active = false;
+            Name = "";
+            Active = false;
 
             components = new List<Component>();
 
