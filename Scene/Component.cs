@@ -1,10 +1,8 @@
 ﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Reflection;
 
-namespace ParkSimulatorCore.Scene
-{
-
+namespace ParkSimulator
+{ 
     public struct FieldInfo
     {
         public string name;

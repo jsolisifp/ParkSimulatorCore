@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace ParkSimulatorStorage
+namespace ParkSimulator
 {
     public abstract class Storage
     {

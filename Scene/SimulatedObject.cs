@@ -1,4 +1,4 @@
-﻿namespace ParkSimulatorCore.Scene
+﻿namespace ParkSimulator
 {
     public class SimulatedObject
     {

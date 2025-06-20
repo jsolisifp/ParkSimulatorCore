@@ -1,6 +1,6 @@
 ﻿
 
-namespace ParkSimulatorStorage
+namespace ParkSimulator
 {
     public abstract class ResourceLoader
     {

@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 
-namespace ParkSimulatorCore.Scene.Components
-{
+namespace ParkSimulator
+{ 
     public class Location : Component
     {
         public Vector3 coordinates;
