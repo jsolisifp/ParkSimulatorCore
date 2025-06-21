@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Numerics;
 
 namespace ParkSimulator
@@ -201,11 +202,25 @@ namespace ParkSimulator
 
                         SimulatedObject? targetObject = AskObject("Object");
 
-                        if(component != null && targetObject != null) { targetObject.AddComponent(component); }
+                        if(targetObject != null && component != null)
+                        {                            
+                            targetObject.AddComponent(component);
+                        }
 
                         menu = MenuId.main;
                     }
-                    else if (option == MenuObjectOptionRemoveComponent) { menu = MenuId.main; }
+                    else if (option == MenuObjectOptionRemoveComponent)
+                    {
+                        SimulatedObject? targetObject = AskObject("Object");
+
+                        if(targetObject != null)
+                        {
+                            Component? targetComponent = AskObjectComponent(targetObject, "Component");
+                            if(targetComponent != null) { targetObject.RemoveComponent(targetComponent); }
+                        }
+
+                        menu = MenuId.main;
+                    }
                     else if (option == MenuOptionBackOrQuit) { menu = MenuId.main; }
                 }
                 else if (menu == MenuId.simulation)
@@ -364,6 +379,37 @@ namespace ParkSimulator
             }
 
             return r;
+        }
+
+        static Component? AskObjectComponent(SimulatedObject simObject, string message)
+        {
+            Debug.Assert(Simulation.Scene != null, "Scene not assigned");
+
+            Component? r = null;
+            int index;
+            bool done = false;
+            while(!done)
+            {
+                var components = simObject.GetComponents();
+
+                for(int i = 0; i < components.Count; i++)
+                {
+                    Console.WriteLine("[" + (i + 1) + "]:" + components[i].GetType().Name);
+                }
+
+                Console.Write(message + "?>");
+                string? line = Console.ReadLine();
+
+                if (Int32.TryParse(line, out index))
+                {
+                    if (index >= 1 && index <= components.Count) { done = true; r = components[index - 1]; }
+                    else { Console.WriteLine("Please enter a numeric index between " + 1 + " and " + components.Count + " (both included)"); }
+                }
+                else { Console.WriteLine("Please enter a numeric index");  }
+            }
+
+            return r;
+
         }
 
         static SimulatedObject? AskObject(string message)
