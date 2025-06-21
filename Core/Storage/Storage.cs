@@ -22,6 +22,9 @@ namespace ParkSimulator
 
     public abstract class Storage
     {
+        public const string typeIdScene = "scene";
+        public const string typeIdText = "txt";
+
         protected Dictionary<string, ResourceLoader> loaders;
         Dictionary<string, object> loadedResources;
 

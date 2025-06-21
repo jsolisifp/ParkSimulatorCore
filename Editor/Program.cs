@@ -84,9 +84,12 @@ namespace ParkSimulator
             bool viewObjectsEnabled = true;
             bool viewResourcesEnabled = true;
 
+            bool error = false;
+            string errorMessage = "";
 
             while(!quit)
             {
+
                 Console.Clear();
 
                 Console.WriteLine(",*******************************************,");
@@ -193,15 +196,13 @@ namespace ParkSimulator
                     }
                     else if (option == MenuObjectOptionAddComponent)
                     {
-                        if(selectedObject != null)
-                        {
-                            string name = AskComponentName("Component");
-                            Component? component = SimulatedObject.CreateComponentByName(name);
+                        string name = AskComponentName("Component");
+                        Component? component = SimulatedObject.CreateComponentByName(name);
 
-                            SimulatedObject? targetObject = AskObject("Object");
+                        SimulatedObject? targetObject = AskObject("Object");
 
-                            if(component != null && targetObject != null) { targetObject.AddComponent(component); }
-                        }
+                        if(component != null && targetObject != null) { targetObject.AddComponent(component); }
+
                         menu = MenuId.main;
                     }
                     else if (option == MenuObjectOptionRemoveComponent) { menu = MenuId.main; }
@@ -221,6 +222,13 @@ namespace ParkSimulator
                     else if (option == MenuOptionBackOrQuit) { menu = MenuId.main; }
 
                 }
+
+                if(error)
+                {
+                    ShowError(errorMessage);
+                }
+
+                error = false;
 
             }
 
@@ -569,6 +577,17 @@ namespace ParkSimulator
                 Console.WriteLine(":" + id + (isLoaded ? " : [LOADED]" : ""));
             }
 
+        }
+
+        static void ShowError(string error)
+        {
+            Console.Clear();
+            Console.WriteLine(",-------------------,");
+            Console.WriteLine("|      Error!       |");
+            Console.WriteLine("`-------------------`");
+            Console.WriteLine(" " + error);
+            Thread.Sleep(3000);
+                
         }
     }
 }

@@ -11,8 +11,8 @@ namespace ParkSimulator
         {
             BasePath = config.GetTextValue("basePath", "");
 
-            loaders.Add("scene", new FileSceneLoader(this));
-            loaders.Add("txt", new FileTextLoader(this));
+            loaders.Add(typeIdScene, new FileSceneLoader(this));
+            loaders.Add(typeIdText, new FileTextLoader(this));
         }
 
         public override void Finish()
