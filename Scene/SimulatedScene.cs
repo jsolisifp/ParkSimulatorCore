@@ -21,6 +21,14 @@ namespace ParkSimulator
             objects.Remove(so);
         }
 
+        public void Load()
+        {
+            for (int i = 0; i < objects.Count; i++)
+            {
+                objects[i].Load();
+            }
+        }
+
         public void Start()
         {
             for (int i = 0; i < objects.Count; i++)
@@ -42,6 +50,14 @@ namespace ParkSimulator
             for (int i = 0; i < objects.Count; i++)
             {
                 objects[i].Step(deltaTime);
+            }
+        }
+
+        public void Unload()
+        {
+            for (int i = 0; i < objects.Count; i++)
+            {
+                objects[i].Unload();
             }
         }
 

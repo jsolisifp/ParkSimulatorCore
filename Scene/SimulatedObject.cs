@@ -16,6 +16,15 @@
 
         }
 
+        public void Load()
+        {
+            for (int i = 0; i < components.Count; i++)
+            {
+                components[i].Load();
+            }
+
+        }
+
         public void Start()
         {
             for (int i = 0; i < components.Count; i++)
@@ -45,6 +54,14 @@
             for (int i = 0; i < components.Count; i++)
             {
                 components[i].Pass(passId);
+            }
+        }
+
+        public void Unload()
+        {
+            for (int i = 0; i < components.Count; i++)
+            {
+                components[i].Unload();
             }
         }
 
