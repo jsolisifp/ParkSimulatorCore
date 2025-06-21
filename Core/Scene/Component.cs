@@ -7,6 +7,7 @@ namespace ParkSimulator
     {
         public string name;
         public string type;
+        public bool isComponent;
         public bool isWritable;
     };
 
@@ -27,6 +28,8 @@ namespace ParkSimulator
             properties = t.GetProperties();
             for (int i = 0; i < properties.Length; i++) { propertiesByName[properties[i].Name] = properties[i]; }
 
+            Active = true;
+
         }
 
         public ReadOnlyCollection<FieldInfo> GetFieldsInfo()
@@ -39,6 +42,8 @@ namespace ParkSimulator
                 FieldInfo f = new();
                 f.name = p.Name;
                 f.type = p.PropertyType.Name;
+                f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
+                f.isWritable = p.CanWrite;
                 fields.Add(f);
             }
 
@@ -57,18 +62,18 @@ namespace ParkSimulator
 
         public virtual void Load() { }
         public virtual void Start() { }
-        public virtual void Step(float deltaTime) { }
+        public virtual void Step() { }
         public virtual void Pass(int passId) { }
         public virtual void Stop() { }
         public virtual void Unload() { }
 
 
-        public void SetSimulatedObject(SimulatedObject? so)
+        public void AttachToSimulatedObject(SimulatedObject? so)
         {
             simulatedObject = so;
         }
 
-        public SimulatedObject? GetSimulatedObject()
+        public SimulatedObject? GetAttachedSimulatedObject()
         {
             return simulatedObject;
         }

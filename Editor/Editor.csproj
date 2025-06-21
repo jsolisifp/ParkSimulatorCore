@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FileStorage\FileStorage.csproj" />
-    <ProjectReference Include="..\Simulation\Simulation.csproj" />
+    <ProjectReference Include="..\Basic\Basic.csproj" />
   </ItemGroup>
 
 </Project>

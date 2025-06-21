@@ -7,9 +7,9 @@ namespace ParkSimulator
     {
         string? basePath;
 
-        public override void Init(string path)
+        public override void Init(Config config)
         {
-            basePath = path;
+            basePath = config.GetTextValue("basePath", "");
 
             loaders.Add("scene", new SceneFileLoader());
             loaders.Add("txt", new TextFileLoader());
