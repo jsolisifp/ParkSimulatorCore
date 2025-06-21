@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace ParkSimulator
 {
@@ -42,25 +43,26 @@ namespace ParkSimulator
             scene.Load();
         }
 
-        public static void LoadScene(string resourceId)
+        public static void LoadScene(string resourceId, string typeId)
         {
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
             scene.Unload();
-            scene = storage.GetResource<SimulatedScene>(resourceId);
+            scene = storage.LoadResourceIfNeeded<SimulatedScene>(resourceId, typeId);
 
             Debug.Assert(scene != null, "Cannot load scene");
 
             scene.Load();
         }
 
-        public static void SaveScene(string resourceId, string typeId)
+        public static void SaveScene(ref string resourceId, string typeId)
         {
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
+
             storage.SaveResource(ref resourceId, typeId, scene);
         }
         

@@ -1,12 +1,14 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace ParkSimulator
 { 
-    public struct FieldInfo
+    public struct ComponentFieldInfo
     {
         public string name;
         public string type;
+        public bool isResourcePointer;
         public bool isComponent;
         public bool isWritable;
     };
@@ -32,22 +34,23 @@ namespace ParkSimulator
 
         }
 
-        public ReadOnlyCollection<FieldInfo> GetFieldsInfo()
+        public ReadOnlyCollection<ComponentFieldInfo> GetFieldsInfo()
         {
-            List<FieldInfo> fields = new();
+            List<ComponentFieldInfo> fields = new();
 
             for (int i = 0; i < properties.Length; i++)
             {
                 PropertyInfo p = properties[i];
-                FieldInfo f = new();
+                ComponentFieldInfo f = new();
                 f.name = p.Name;
                 f.type = p.PropertyType.Name;
+                f.isResourcePointer = (p.PropertyType.Name == typeof(ResourcePointer).Name);
                 f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
                 f.isWritable = p.CanWrite;
                 fields.Add(f);
             }
 
-            return fields.AsReadOnly<FieldInfo>();
+            return fields.AsReadOnly<ComponentFieldInfo>();
         }
 
         public T? GetFieldValue<T>(string name)
@@ -60,12 +63,10 @@ namespace ParkSimulator
             propertiesByName[name].SetValue(this, value);
         }
 
-        public virtual void Load() { }
         public virtual void Start() { }
         public virtual void Step() { }
         public virtual void Pass(int passId) { }
         public virtual void Stop() { }
-        public virtual void Unload() { }
 
 
         public void AttachToSimulatedObject(SimulatedObject? so)

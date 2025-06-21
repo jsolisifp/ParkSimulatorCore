@@ -7,8 +7,15 @@ using System.Threading.Tasks;
 
 namespace ParkSimulator
 {
-    public class SceneFileLoader : ResourceLoader
+    public class FileSceneLoader : ResourceLoader
     {
+        FileStorage storage;
+
+        public FileSceneLoader(FileStorage _storage)
+        {
+            storage = _storage;
+        }
+
         public override object? Load(string id)
         {
             return default;

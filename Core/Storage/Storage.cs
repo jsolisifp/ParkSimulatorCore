@@ -1,11 +1,23 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace ParkSimulator
 {
-    public struct ResourceInfo
+    public struct ResourcePointer
     {
-        public string id;
-        public string typeId;
+        public string? resourceId;
+        public string? typeId;
+
+        public object? resource;
+
+        public ResourcePointer() { resourceId = null; typeId = null; }
+        public ResourcePointer(string _resourceId, string _typeId) { resourceId = _resourceId; typeId = _typeId; }
+
+        public T? Get<T>()
+        {
+            return (T?) resource;
+        }
+
     };
 
     public abstract class Storage
@@ -25,18 +37,25 @@ namespace ParkSimulator
         public void RegisterLoader(string typeId, ResourceLoader loader) { loaders[typeId] = loader; }
         public void UnregisterLoader(string typeId) { loaders.Remove(typeId); }
 
-        public T? GetResource<T>(string resourceId) { return (T?)loadedResources[resourceId];  }
-
-        public void LoadResource(string resourceId, string typeId)
+        public bool IsResourceLoaded(string resourceId) { return loadedResources.ContainsKey(resourceId); }
+        public T? LoadResourceIfNeeded<T>(string resourceId, string typeId)
         {
-            object? resource = loaders[typeId].Load(resourceId);
-            if(resource != null) { loadedResources[resourceId] = resource; }            
+            if(!loadedResources.ContainsKey(resourceId))
+            {
+                object? resource = loaders[typeId].Load(resourceId);
+                if(resource != null) { loadedResources[resourceId] = resource; } 
+            }
+
+            return (T?)loadedResources[resourceId];        
         }
 
-        public void UnloadResource(string resourceId, string typeId)
+        public void UnloadResourceIfNeeded(string resourceId, string typeId)
         {
-            loaders[typeId].Unload(resourceId);
-            loadedResources.Remove(resourceId);
+            if(loadedResources.ContainsKey(resourceId))
+            {
+                loaders[typeId].Unload(resourceId);
+                loadedResources.Remove(resourceId);
+            }
 
         }
 
@@ -54,6 +73,6 @@ namespace ParkSimulator
             if(reloadedResource != null) { loadedResources[resourceId] = reloadedResource; }
         }
 
-        public abstract ReadOnlyCollection<ResourceInfo> GetResourcesInfo();
+        public abstract ReadOnlyCollection<ResourcePointer> GetResourcePointers();
     }
 }

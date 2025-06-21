@@ -39,17 +39,6 @@ namespace ParkSimulator
             scene = null;
         }
 
-        public void Load()
-        {
-            Debug.Assert(scene != null, "Simulated Object not attached to scene when loading");
-            
-            for (int i = 0; i < components.Count; i++)
-            {
-                components[i].Load();
-            }
-
-        }
-
         public void Start()
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when started");
@@ -90,16 +79,6 @@ namespace ParkSimulator
             }
         }
 
-        public void Unload()
-        {
-            Debug.Assert(scene != null, "Simulated Object not attached to scene when unloading");
-
-            for (int i = 0; i < components.Count; i++)
-            {
-                components[i].Unload();
-            }
-        }
-
         public void AddComponent(Component c)
         {
             components.Add(c);
@@ -107,8 +86,8 @@ namespace ParkSimulator
 
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.loaded) { c.Load(); }
-                else if(scene.State == SimulatedSceneState.playing) { c.Load(); c.Start(); }
+                if(scene.State == SimulatedSceneState.loaded) { scene.LoadComponent(c); }
+                else if(scene.State == SimulatedSceneState.playing) { scene.LoadComponent(c); c.Start(); }
             }
 
         }
@@ -117,8 +96,8 @@ namespace ParkSimulator
         {
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.loaded) { c.Unload(); }
-                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); c.Unload(); }
+                if(scene.State == SimulatedSceneState.loaded) { scene.UnloadComponent(c); }
+                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnloadComponent(c); }
             }
 
             components.Remove(c);

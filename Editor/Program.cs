@@ -120,20 +120,21 @@ namespace ParkSimulator
                     if (option == MenuSceneOptionNew)
                     {
                         Simulation.NewScene();
+                        CreateNewSceneDefaultObjects();
                         selectedObject = null;
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionSave)
                     {
                         if(savedSceneFileName == null) { saveAs = true; }
-                        else { Simulation.SaveScene(savedSceneFileName, "scene"); menu = MenuId.main; }
+                        else { Simulation.SaveScene(ref savedSceneFileName, "scene"); menu = MenuId.main; }
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionLoad)
                     {
                         selectedObject = null;
                         string fileName = AskText("File name");
-                        Simulation.LoadScene(fileName);
+                        Simulation.LoadScene(fileName, "scene");
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionSaveAs)
@@ -145,7 +146,7 @@ namespace ParkSimulator
                     if(saveAs)
                     {
                         string fileName = AskText("File name");
-                        Simulation.SaveScene(fileName, "scene");
+                        Simulation.SaveScene(ref fileName, "scene");
                         menu = MenuId.main;
                     }
                 }
@@ -239,6 +240,7 @@ namespace ParkSimulator
 
             locationComponentA = new Location();
             locationComponentA.Coordinates = new Vector3(-10, -10, 0);
+            locationComponentA.Description = new ResourcePointer("rollercoaster_a_description.txt", "txt");
 
             rollerCoasterA.AddComponent(locationComponentA);
 
@@ -249,6 +251,7 @@ namespace ParkSimulator
 
             locationComponentB = new Location();
             locationComponentB.Coordinates = new Vector3(10, -10, 0);
+            locationComponentB.Description = new ResourcePointer("rollercoaster_b_description.txt", "txt");
 
             rollerCoasterB.AddComponent(locationComponentB);
 
@@ -423,7 +426,7 @@ namespace ParkSimulator
                     
                     for(int j = 0; j < fieldsInfo.Count; j++)
                     {
-                        FieldInfo f = fieldsInfo[j];
+                        ComponentFieldInfo f = fieldsInfo[j];
                         string value = "*Cannot display value*";
 
                         if(f.type == "Vector3")
@@ -445,6 +448,12 @@ namespace ParkSimulator
                         {
                             float? v = c.GetFieldValue<float>(f.name);
                             if(v.HasValue) { value = v.Value.ToString(); }
+                        }
+                        else if(f.isResourcePointer)
+                        {
+                            ResourcePointer v = c.GetFieldValue<ResourcePointer>(f.name);
+                            if(v.resourceId != null) { value = "[" + v.resourceId + "]"; }
+                            else { value = "[none]"; }
                         }
                         else if(f.isComponent)
                         {
@@ -548,11 +557,16 @@ namespace ParkSimulator
             Console.WriteLine("|      Resources    |");
             Console.WriteLine("`-------------------`");
 
-            var resources = Simulation.Storage.GetResourcesInfo();
+            var resources = Simulation.Storage.GetResourcePointers();
 
             for(int i = 0; i < resources.Count; i++)
             {
-                Console.WriteLine(":" + resources[i].id);
+                string? id = resources[i].resourceId;
+
+                Debug.Assert(id != null, "Resource pointer id is null");
+
+                bool isLoaded = Simulation.Storage.IsResourceLoaded(id);
+                Console.WriteLine(":" + id + (isLoaded ? " : [LOADED]" : ""));
             }
 
         }

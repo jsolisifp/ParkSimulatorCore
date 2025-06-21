@@ -7,11 +7,18 @@ using System.Threading.Tasks;
 
 namespace ParkSimulator
 {
-    public class TextFileLoader : ResourceLoader
+    public class FileTextLoader : ResourceLoader
     {
+        FileStorage storage;
+
+        public FileTextLoader(FileStorage _storage)
+        {
+            storage = _storage;
+        }
+
         public override object? Load(string id)
         {
-            string r = File.ReadAllText(id);
+            string r = File.ReadAllText(storage.BasePath + id);
 
             return r;
         }

@@ -5,14 +5,14 @@ namespace ParkSimulator
 {
     public class FileStorage : Storage
     {
-        string? basePath;
+        public string BasePath { get; set; } = "";
 
         public override void Init(Config config)
         {
-            basePath = config.GetTextValue("basePath", "");
+            BasePath = config.GetTextValue("basePath", "");
 
-            loaders.Add("scene", new SceneFileLoader());
-            loaders.Add("txt", new TextFileLoader());
+            loaders.Add("scene", new FileSceneLoader(this));
+            loaders.Add("txt", new FileTextLoader(this));
         }
 
         public override void Finish()
@@ -20,21 +20,19 @@ namespace ParkSimulator
             // Nothing to do
         }
 
-        public override ReadOnlyCollection<ResourceInfo> GetResourcesInfo()
+        public override ReadOnlyCollection<ResourcePointer> GetResourcePointers()
         {
-            Debug.Assert(!string.IsNullOrEmpty(basePath));
+            string[] files = Directory.GetFileSystemEntries(BasePath);
 
-            string[] files = Directory.GetFileSystemEntries(basePath);
-
-            List<ResourceInfo> infos = new();
+            List<ResourcePointer> infos = new();
 
             for (int i = 0; i < files.Length; i++)
             {
-                ResourceInfo info = new() { id = files[i].Substring(basePath.Length), typeId = Path.GetExtension(files[i]) };
+                ResourcePointer info = new() { resourceId = files[i].Substring(BasePath.Length), typeId = Path.GetExtension(files[i]) };
                 infos.Add(info);
             }
 
-            return infos.AsReadOnly<ResourceInfo>();
+            return infos.AsReadOnly<ResourcePointer>();
         }
 
     }

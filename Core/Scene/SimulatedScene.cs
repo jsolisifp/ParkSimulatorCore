@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace ParkSimulator
 {
@@ -28,14 +29,14 @@ namespace ParkSimulator
             so.AttachToScene(this);
 
 
-            if(State == SimulatedSceneState.loaded) { so.Load(); }
-            else if(State == SimulatedSceneState.playing) { so.Load(); so.Start(); }
+            if(State == SimulatedSceneState.loaded) { LoadSimulatedObject(so); }
+            else if(State == SimulatedSceneState.playing) { LoadSimulatedObject(so); so.Start(); }
         }
 
         public void RemoveSimulatedObject(SimulatedObject so)
         {
-            if(State == SimulatedSceneState.loaded) { so.Unload(); }
-            else if(State == SimulatedSceneState.playing) { so.Stop(); so.Unload(); }
+            if(State == SimulatedSceneState.loaded) { UnloadSimulatedObject(so); }
+            else if(State == SimulatedSceneState.playing) { so.Stop(); UnloadSimulatedObject(so); }
 
             so.DetachFromScene();
             objects.Remove(so);
@@ -47,7 +48,7 @@ namespace ParkSimulator
 
             for (int i = 0; i < objects.Count; i++)
             {
-                objects[i].Load();
+                LoadSimulatedObject(objects[i]);
             }
 
             State = SimulatedSceneState.loaded;
@@ -93,7 +94,7 @@ namespace ParkSimulator
 
             for (int i = 0; i < objects.Count; i++)
             {
-                objects[i].Unload();
+                UnloadSimulatedObject(objects[i]);
             }
 
             State = SimulatedSceneState.unloaded;
@@ -102,6 +103,72 @@ namespace ParkSimulator
         public ReadOnlyCollection<SimulatedObject> GetSimulatedObjects()
         {
             return objects.AsReadOnly<SimulatedObject>();
+        }
+
+        public void LoadSimulatedObject(SimulatedObject o)
+        {
+            var components = o.GetComponents();
+            for (int j = 0; j < components.Count; j++)
+            {
+                LoadComponent(components[j]);
+            }
+
+        }
+
+        public void LoadComponent(Component c)
+        {
+            var fields = c.GetFieldsInfo();
+
+            for(int k = 0; k < fields.Count; k++)
+            {
+                ComponentFieldInfo f = fields[k];
+                if(f.type == typeof(ResourcePointer).Name)
+                {
+                    ResourcePointer p = c.GetFieldValue<ResourcePointer>(f.name);
+
+                    if(p.resourceId != null && p.typeId != null && p.resource == null)
+                    {
+                        Debug.Assert(Simulation.Storage != null);
+                        p.resource = Simulation.Storage.LoadResourceIfNeeded<object>(p.resourceId, p.typeId);
+                    }
+
+                    c.SetFieldValue<ResourcePointer>(f.name, p);
+                }
+            }
+        }
+
+        public void UnloadSimulatedObject(SimulatedObject o)
+        {
+            var components = o.GetComponents();
+            for (int j = 0; j < components.Count; j++)
+            {
+                UnloadComponent(components[j]);
+            }
+
+        }
+
+        public void UnloadComponent(Component c)
+        {
+            var fields = c.GetFieldsInfo();
+
+            for(int k = 0; k < fields.Count; k++)
+            {
+                ComponentFieldInfo f = fields[k];
+                if(f.type == typeof(ResourcePointer).Name)
+                {
+                    ResourcePointer p = c.GetFieldValue<ResourcePointer>(f.name);
+
+                    if(p.resourceId != null && p.typeId != null && p.resource != null)
+                    {
+                        p.resource = null;
+
+                        Debug.Assert(Simulation.Storage != null);
+                        Simulation.Storage.UnloadResourceIfNeeded(p.resourceId, p.typeId);
+                    }
+
+                    c.SetFieldValue<ResourcePointer>(f.name, p);
+                }
+            }
         }
 
     }
