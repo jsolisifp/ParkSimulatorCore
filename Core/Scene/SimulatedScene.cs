@@ -129,7 +129,8 @@ namespace ParkSimulator
                     if(p.resourceId != null && p.typeId != null && p.resource == null)
                     {
                         Debug.Assert(Simulation.Storage != null);
-                        p.resource = Simulation.Storage.LoadResourceIfNeeded<object>(p.resourceId, p.typeId);
+                        Simulation.Storage.AddReference(p.resourceId, p.typeId);
+                        p.resource = Simulation.Storage.GetLoadedResource<object>(p.resourceId);
                     }
 
                     c.SetFieldValue<ResourcePointer>(f.name, p);
@@ -163,7 +164,7 @@ namespace ParkSimulator
                         p.resource = null;
 
                         Debug.Assert(Simulation.Storage != null);
-                        Simulation.Storage.UnloadResourceIfNeeded(p.resourceId, p.typeId);
+                        Simulation.Storage.RemoveReference(p.resourceId, p.typeId);
                     }
 
                     c.SetFieldValue<ResourcePointer>(f.name, p);

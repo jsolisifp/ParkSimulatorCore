@@ -18,6 +18,7 @@ namespace ParkSimulator
 
         static SimulationState state = SimulationState.uninitialized;
         static SimulatedScene? scene;
+        static string? sceneResourceId;
         static Storage? storage;
         static Config? config;
 
@@ -30,6 +31,7 @@ namespace ParkSimulator
             state = SimulationState.stopped;
 
             scene = new SimulatedScene();
+            sceneResourceId = null;
 
             scene.Load();
         }
@@ -37,33 +39,42 @@ namespace ParkSimulator
         public static void NewScene()
         {
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
+            Debug.Assert(storage != null, "You must create a storage");
+
             if(scene != null) { scene.Unload(); }
+            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+
             scene = new SimulatedScene();
+            sceneResourceId = null;
 
             scene.Load();
         }
 
-        public static void LoadScene(string resourceId, string typeId)
+        public static void LoadScene(string resourceId)
         {
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
-            scene.Unload();
-            scene = storage.LoadResourceIfNeeded<SimulatedScene>(resourceId, typeId);
+            if(scene != null) { scene.Unload(); }
+            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+
+            sceneResourceId = resourceId;
+            storage.AddReference(resourceId, Storage.typeIdScene);
+            scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
 
             Debug.Assert(scene != null, "Cannot load scene");
 
             scene.Load();
         }
 
-        public static void SaveScene(ref string resourceId, string typeId)
+        public static void SaveScene(ref string resourceId)
         {
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
-            storage.SaveResource(ref resourceId, typeId, scene);
+            storage.SaveResource(ref resourceId, Storage.typeIdScene, scene);
         }
         
 

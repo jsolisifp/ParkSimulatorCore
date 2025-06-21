@@ -130,14 +130,14 @@ namespace ParkSimulator
                     else if (option == MenuSceneOptionSave)
                     {
                         if(savedSceneFileName == null) { saveAs = true; }
-                        else { Simulation.SaveScene(ref savedSceneFileName, "scene"); menu = MenuId.main; }
+                        else { Simulation.SaveScene(ref savedSceneFileName); menu = MenuId.main; }
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionLoad)
                     {
                         selectedObject = null;
                         string fileName = AskText("File name");
-                        Simulation.LoadScene(fileName, "scene");
+                        Simulation.LoadScene(fileName);
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionSaveAs)
@@ -149,7 +149,7 @@ namespace ParkSimulator
                     if(saveAs)
                     {
                         string fileName = AskText("File name");
-                        Simulation.SaveScene(ref fileName, "scene");
+                        Simulation.SaveScene(ref fileName);
                         menu = MenuId.main;
                     }
                 }
@@ -240,8 +240,10 @@ namespace ParkSimulator
 
             SimulatedObject rollerCoasterA;
             SimulatedObject rollerCoasterB;
+            SimulatedObject rollerCoasterC;
             Location locationComponentA;
             Location locationComponentB;
+            Location locationComponentC;
 
             rollerCoasterA = new SimulatedObject();
             rollerCoasterA.Name = "RollercoasterA";
@@ -265,8 +267,20 @@ namespace ParkSimulator
 
             Simulation.Scene.AddSimulatedObject(rollerCoasterB);
 
+            rollerCoasterC = new SimulatedObject();
+            rollerCoasterC.Name = "RollercoasterC";
+
+            locationComponentC = new Location();
+            locationComponentC.Coordinates = new Vector3(10, 10, 0);
+            locationComponentC.Description = new ResourcePointer("rollercoaster_b_description.txt", "txt");
+
+            rollerCoasterC.AddComponent(locationComponentC);
+
+            Simulation.Scene.AddSimulatedObject(rollerCoasterC);
+
             locationComponentA.Neighbour = locationComponentB;
             locationComponentB.Neighbour = locationComponentA;
+            locationComponentA.Neighbour = locationComponentA;
             
             
         }
@@ -573,8 +587,9 @@ namespace ParkSimulator
 
                 Debug.Assert(id != null, "Resource pointer id is null");
 
-                bool isLoaded = Simulation.Storage.IsResourceLoaded(id);
-                Console.WriteLine(":" + id + (isLoaded ? " : [LOADED]" : ""));
+                int referenceCount = Simulation.Storage.GetReferenceCount(id);
+
+                Console.WriteLine(":" + id + (referenceCount > 0 ? " : [LOADED] : refCount " + referenceCount : ""));
             }
 
         }
