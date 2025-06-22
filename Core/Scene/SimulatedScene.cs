@@ -13,7 +13,12 @@ namespace ParkSimulator
 
     public class SimulatedScene
     {
+        public int Seed { get; set; }
+        public int Steps { get{ return steps; } }
+
         List<SimulatedObject> objects;
+
+        int steps;
 
         public SimulatedSceneState State { get; set; }
 
@@ -57,6 +62,8 @@ namespace ParkSimulator
         public void Start()
         {
             Debug.Assert(State == SimulatedSceneState.loaded, "Starting not loaded scene");
+
+            steps = 0;
 
             for (int i = 0; i < objects.Count; i++)
             {

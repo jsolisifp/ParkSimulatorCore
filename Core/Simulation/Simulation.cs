@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using static System.Formats.Asn1.AsnWriter;
 
 namespace ParkSimulator
@@ -15,20 +16,29 @@ namespace ParkSimulator
         public static SimulationState  State { get { return state; } }
         public static SimulatedScene? Scene { get { return scene; } }
         public static Storage? Storage { get { return storage; } }
+        public static Render? Render { get { return render; } }
+        public static Random Random { get { return random; } } 
+
 
         static SimulationState state = SimulationState.uninitialized;
         static SimulatedScene? scene;
         static string? sceneResourceId;
         static Storage? storage;
+        static Render? render;
         static Config? config;
+        static Random? random;
 
-        public static void Init(Config _config, Storage _storage)
+        public static void Init(Config _config, Storage? _storage, Render? _rendering)
         {
             Debug.Assert(state == SimulationState.uninitialized, "Simulation is already initialized");
 
             storage = _storage;
             config = _config;
+            render = _rendering;
             state = SimulationState.stopped;
+
+            storage?.Init(config);
+            render?.Init(config);
 
             scene = new SimulatedScene();
             sceneResourceId = null;
@@ -84,6 +94,8 @@ namespace ParkSimulator
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
 
+            random = new Random(scene.Seed);
+
             scene.Start();
 
             state = SimulationState.playing;
@@ -116,8 +128,23 @@ namespace ParkSimulator
             Debug.Assert(storage != null, "You must create a storage");
 
             scene.Unload();
-            storage.Finish();
+            scene = null;
+
+            storage?.Finish();
             storage = null;
+
+            render?.Finish();
+            render = null;
+
+            state = SimulationState.uninitialized;
+
+        }
+
+        public static void RenderFrame()
+        {
+            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+
+            render?.RenderFrame();
 
         }
 

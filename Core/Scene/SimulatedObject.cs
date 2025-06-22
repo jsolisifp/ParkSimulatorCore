@@ -120,53 +120,67 @@ namespace ParkSimulator
         {
             List<ComponentInfo> components = new();
 
-            Assembly? a = Assembly.GetAssembly(typeof(SimulatedObject));
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            Debug.Assert(a != null, "No se encuentra el ensamblado");
-
-            Type[] types = a.GetTypes();
-
-            for (int i = 0; i < types.Length; i++)
+            for(int k = 0; k < assemblies.Length; k ++)
             {
-                Type t = types[i];
+                Assembly? a = assemblies[k];
 
-                if (t.IsSubclassOf(typeof(Component)))
+                Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                Type[] types = a.GetTypes();
+
+                for (int i = 0; i < types.Length; i++)
                 {
-                    ComponentInfo c = new();
-                    c.name = t.Name;
-                    c.fullName = t.FullName;
-                    components.Add(c);
+                    Type t = types[i];
 
+                    if (t.IsSubclassOf(typeof(Component)))
+                    {
+                        ComponentInfo c = new();
+                        c.name = t.Name;
+                        c.fullName = t.FullName;
+                        components.Add(c);
+
+                    }
                 }
+
             }
+
 
             return components.AsReadOnly<ComponentInfo>();
         }
 
         public static Component CreateComponentByName(string name)
         {
-            Assembly? a = Assembly.GetAssembly(typeof(SimulatedObject));
             Component? r = null;
 
-            Debug.Assert(a != null, "No se encuentra el ensamblado");
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            Type[] types = a.GetTypes();
-
-            for (int i = 0; i < types.Length; i++)
+            for(int k = 0; k < assemblies.Length; k ++)
             {
-                Type t = types[i];
+                Assembly? a = assemblies[k];
 
-                if (t.IsSubclassOf(typeof(Component)))
+                Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                Type[] types = a.GetTypes();
+
+                for (int i = 0; i < types.Length; i++)
                 {
-                    if(t.Name == name)
+                    Type t = types[i];
+
+                    if (t.IsSubclassOf(typeof(Component)))
                     {
-                        object? o = Activator.CreateInstance(t);
+                        if(t.Name == name)
+                        {
+                            object? o = Activator.CreateInstance(t);
 
-                        Debug.Assert(o != null, "No se puede crear un objeto de tipo " + name);
+                            Debug.Assert(o != null, "No se puede crear un objeto de tipo " + name);
 
-                        r = (Component)o;
+                            r = (Component)o;
+                        }
                     }
                 }
+
             }
 
             Debug.Assert(r != null, "No existe ningún tipo de componente llamado " + name);

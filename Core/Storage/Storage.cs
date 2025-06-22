@@ -21,7 +21,7 @@ namespace ParkSimulator
 
     };
 
-    public abstract class Storage
+    public abstract class Storage : SimulationSubsystem
     {
         public const string typeIdScene = "scene";
         public const string typeIdText = "txt";
@@ -36,9 +36,6 @@ namespace ParkSimulator
             loadedResources = new Dictionary<string, object>();
             referenceCounters = new Dictionary<string, int>();
         }
-
-        public abstract void Init(Config config);
-        public abstract void Finish();
 
         public void RegisterLoader(string typeId, ResourceLoader loader) { loaders[typeId] = loader; }
         public void UnregisterLoader(string typeId) { loaders.Remove(typeId); }

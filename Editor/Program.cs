@@ -27,9 +27,10 @@ namespace ParkSimulator
         const int MenuMainOptionSelection = 2;
         const int MenuMainOptionObject = 3;
         const int MenuMainOptionSimulation = 4;
-        const int MenuMainOptionViews= 5;
+        const int MenuMainOptionRender = 5;
+        const int MenuMainOptionViews= 6;
 
-        const int MenuMainOptionsCount = 5;
+        const int MenuMainOptionsCount = 7;
 
         const int MenuSceneOptionNew = 1;
         const int MenuSceneOptionLoad = 2;
@@ -53,6 +54,7 @@ namespace ParkSimulator
         const int MenuSimulationOptionPlay = 1;
         const int MenuSimulationOptionStep = 2;
         const int MenuSimulationOptionStop = 3;
+        const int MenuSimulationBatchPlay = 4;
 
         const int MenuSimulationOptionsCount = 4;
 
@@ -69,14 +71,13 @@ namespace ParkSimulator
             string? savedSceneFileName = null;
 
             Config config = new MemoryConfig();
-            config.SetTextValue("basePath", "Resources\\");
 
             Storage storage = new FileStorage();
-            storage.Init(config);
+            Render rendering = new PictureRender();
 
-            Simulation.Init(config, storage);
+            Simulation.Init(config, storage, rendering);
 
-            CreateNewSceneDefaultObjects();
+            CreateSampleScene();
 
             MenuId menu = MenuId.main;
             int option = -1;
@@ -113,6 +114,7 @@ namespace ParkSimulator
                     else if (option == MenuMainOptionSelection) { menu = MenuId.selection; }
                     else if (option == MenuMainOptionObject) { menu = MenuId.@object; }
                     else if (option == MenuMainOptionSimulation) { menu = MenuId.simulation; }
+                    else if (option == MenuMainOptionRender) { Simulation.RenderFrame(); }
                     else if (option == MenuMainOptionViews) { menu = MenuId.views; }
                     else if (option == MenuOptionBackOrQuit) { quit = true; }
 
@@ -124,7 +126,7 @@ namespace ParkSimulator
                     if (option == MenuSceneOptionNew)
                     {
                         Simulation.NewScene();
-                        CreateNewSceneDefaultObjects();
+                        CreateSampleScene();
                         selectedObject = null;
                         menu = MenuId.main;
                     }
@@ -225,9 +227,21 @@ namespace ParkSimulator
                 }
                 else if (menu == MenuId.simulation)
                 {
-                    if (option == MenuSimulationOptionPlay) { Simulation.Play(); menu = MenuId.main; }
-                    else if (option == MenuSimulationOptionStep) { Simulation.Step(); }
+                    if (option == MenuSimulationOptionPlay) { Simulation.Play(); Simulation.RenderFrame(); menu = MenuId.main; }
+                    else if (option == MenuSimulationOptionStep) { Simulation.Step(); Simulation.RenderFrame(); }
                     else if(option == MenuSimulationOptionStop) { Simulation.Stop(); menu = MenuId.main; }
+                    else if(option == MenuSimulationBatchPlay)
+                    {
+                        int steps = AskInt("Steps");
+                        Simulation.Play();
+                        Simulation.RenderFrame();
+                        for(int i = 0; i < steps; i++)
+                        {   Simulation.Step();
+                            Simulation.RenderFrame();
+                        }
+                        Simulation.Stop();
+                        menu = MenuId.main;
+                    }
                     else if (option == MenuOptionBackOrQuit) { menu = MenuId.main; }
                 }
                 else if(menu == MenuId.views)
@@ -249,25 +263,39 @@ namespace ParkSimulator
 
         }
 
-        public static void CreateNewSceneDefaultObjects()
+        public static void CreateSampleScene()
         {
             Debug.Assert(Simulation.Scene != null, "Scene not assigned");
 
             SimulatedObject rollerCoasterA;
             SimulatedObject rollerCoasterB;
             SimulatedObject rollerCoasterC;
+            SimulatedObject rollerCoasterD;
             Location locationComponentA;
             Location locationComponentB;
             Location locationComponentC;
+            Location locationComponentD;
+            PictureRenderer rendererComponentA;
+            PictureRenderer rendererComponentB;
+            PictureRenderer rendererComponentC;
+            PictureRenderer rendererComponentD;
 
             rollerCoasterA = new SimulatedObject();
             rollerCoasterA.Name = "RollercoasterA";
 
             locationComponentA = new Location();
-            locationComponentA.Coordinates = new Vector3(-10, -10, 0);
+            locationComponentA.Coordinates = new Vector3(-40, 0, -30);
+            locationComponentA.Capacity = 10;
+            locationComponentA.Occupation = 10;
             locationComponentA.Description = new ResourcePointer("rollercoaster_a_description.txt", "txt");
 
             rollerCoasterA.AddComponent(locationComponentA);
+
+            rendererComponentA = new PictureRenderer();
+            rendererComponentA.Size = 5.0f;
+            rendererComponentA.Color = new Vector3(0.5f, 0, 0);
+
+            rollerCoasterA.AddComponent(rendererComponentA);
 
             Simulation.Scene.AddSimulatedObject(rollerCoasterA);
 
@@ -275,10 +303,18 @@ namespace ParkSimulator
             rollerCoasterB.Name = "RollercoasterB";
 
             locationComponentB = new Location();
-            locationComponentB.Coordinates = new Vector3(10, -10, 0);
+            locationComponentB.Coordinates = new Vector3(80, 0, -80);
+            locationComponentB.Capacity = 5;
+            locationComponentB.Occupation = 0;
             locationComponentB.Description = new ResourcePointer("rollercoaster_b_description.txt", "txt");
 
             rollerCoasterB.AddComponent(locationComponentB);
+
+            rendererComponentB = new PictureRenderer();
+            rendererComponentB.Size = 5.0f;
+            rendererComponentB.Color = new Vector3(0, 0.5f, 0);
+
+            rollerCoasterB.AddComponent(rendererComponentB);
 
             Simulation.Scene.AddSimulatedObject(rollerCoasterB);
 
@@ -286,16 +322,45 @@ namespace ParkSimulator
             rollerCoasterC.Name = "RollercoasterC";
 
             locationComponentC = new Location();
-            locationComponentC.Coordinates = new Vector3(10, 10, 0);
+            locationComponentC.Coordinates = new Vector3(20, 0, 40);
+            locationComponentC.Capacity = 3;
+            locationComponentC.Occupation = 0;
             locationComponentC.Description = new ResourcePointer("rollercoaster_b_description.txt", "txt");
 
             rollerCoasterC.AddComponent(locationComponentC);
 
+            rendererComponentC = new PictureRenderer();
+            rendererComponentC.Size = 5.0f;
+            rendererComponentC.Color = new Vector3(0, 0, 0.5f);
+
+            rollerCoasterC.AddComponent(rendererComponentC);
+
             Simulation.Scene.AddSimulatedObject(rollerCoasterC);
 
+
+            rollerCoasterD = new SimulatedObject();
+            rollerCoasterD.Name = "RollercoasterC";
+
+            locationComponentD = new Location();
+            locationComponentD.Coordinates = new Vector3(-80, 0, 80);
+            locationComponentD.Capacity = 5;
+            locationComponentD.Occupation = 0;
+            locationComponentD.Description = new ResourcePointer("rollercoaster_b_description.txt", "txt");
+
+            rollerCoasterD.AddComponent(locationComponentD);
+
+            rendererComponentD = new PictureRenderer();
+            rendererComponentD.Size = 5.0f;
+            rendererComponentD.Color = new Vector3(0.5f, 0.5f, 0);
+
+            rollerCoasterD.AddComponent(rendererComponentD);
+
+            Simulation.Scene.AddSimulatedObject(rollerCoasterD);
+
             locationComponentA.Neighbour = locationComponentB;
-            locationComponentB.Neighbour = locationComponentA;
-            locationComponentA.Neighbour = locationComponentA;
+            locationComponentB.Neighbour = locationComponentC;
+            locationComponentC.Neighbour = locationComponentD;
+            locationComponentD.Neighbour = locationComponentA;
             
             
         }
@@ -468,7 +533,7 @@ namespace ParkSimulator
             Console.WriteLine("|     Simulation     |");
             Console.WriteLine("`-------------------`");
 
-                Console.WriteLine("State : " + Simulation.State);
+            Console.WriteLine("State : " + Simulation.State);
         }
 
         static void ShowProperties(SimulatedObject? simuObject)
@@ -554,7 +619,8 @@ namespace ParkSimulator
                 Console.WriteLine(" [2]Selection");
                 Console.WriteLine(" [3]Object");
                 Console.WriteLine(" [4]Simulation");
-                Console.WriteLine(" [5]Views");
+                Console.WriteLine(" [5]Render");
+                Console.WriteLine(" [6]Views");
                 Console.WriteLine(" [0]Exit");
             }
             else if (menu == MenuId.scene)
@@ -588,6 +654,7 @@ namespace ParkSimulator
                 Console.WriteLine(" [1]Play");
                 Console.WriteLine(" [2]Step");
                 Console.WriteLine(" [3]Stop");
+                Console.WriteLine(" [4]Batch play");
                 Console.WriteLine(" [0]Back");
             }
             else if (menu == MenuId.views)
