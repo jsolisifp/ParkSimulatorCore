@@ -6,8 +6,8 @@ namespace ParkSimulator
 {
     public enum SimulatedSceneState
     {
-        unloaded,
-        loaded,
+        unlinked,
+        linked,
         playing
     };
 
@@ -25,7 +25,7 @@ namespace ParkSimulator
         public SimulatedScene()
         {
             objects = new List<SimulatedObject>();
-            State = SimulatedSceneState.unloaded;
+            State = SimulatedSceneState.unlinked;
         }
 
         public void AddSimulatedObject(SimulatedObject so)
@@ -34,34 +34,34 @@ namespace ParkSimulator
             so.AttachToScene(this);
 
 
-            if(State == SimulatedSceneState.loaded) { LoadSimulatedObject(so); }
-            else if(State == SimulatedSceneState.playing) { LoadSimulatedObject(so); so.Start(); }
+            if(State == SimulatedSceneState.linked) { LinkObject(so); }
+            else if(State == SimulatedSceneState.playing) { LinkObject(so); so.Start(); }
         }
 
         public void RemoveSimulatedObject(SimulatedObject so)
         {
-            if(State == SimulatedSceneState.loaded) { UnloadSimulatedObject(so); }
-            else if(State == SimulatedSceneState.playing) { so.Stop(); UnloadSimulatedObject(so); }
+            if(State == SimulatedSceneState.linked) { UnlinkObject(so); }
+            else if(State == SimulatedSceneState.playing) { so.Stop(); UnlinkObject(so); }
 
             so.DetachFromScene();
             objects.Remove(so);
         }
 
-        public void Load()
+        public void Link()
         {
-            Debug.Assert(State == SimulatedSceneState.unloaded, "Loading already loaded scene");
+            Debug.Assert(State == SimulatedSceneState.unlinked, "Scene storage references already added");
 
             for (int i = 0; i < objects.Count; i++)
             {
-                LoadSimulatedObject(objects[i]);
+                LinkObject(objects[i]);
             }
 
-            State = SimulatedSceneState.loaded;
+            State = SimulatedSceneState.linked;
         }
 
         public void Start()
         {
-            Debug.Assert(State == SimulatedSceneState.loaded, "Starting not loaded scene");
+            Debug.Assert(State == SimulatedSceneState.linked, "Starting scene with storage references pending");
 
             steps = 0;
 
@@ -82,7 +82,7 @@ namespace ParkSimulator
                 objects[i].Stop();
             }
 
-            State = SimulatedSceneState.loaded;
+            State = SimulatedSceneState.linked;
         }
 
         public void Step()
@@ -95,16 +95,16 @@ namespace ParkSimulator
             }
         }
 
-        public void Unload()
+        public void Unlink()
         {
-            Debug.Assert(State == SimulatedSceneState.loaded, "Unloading not loaded (or playing) scene");
+            Debug.Assert(State == SimulatedSceneState.linked, "Removing references not previously added or during play");
 
             for (int i = 0; i < objects.Count; i++)
             {
-                UnloadSimulatedObject(objects[i]);
+                UnlinkObject(objects[i]);
             }
 
-            State = SimulatedSceneState.unloaded;
+            State = SimulatedSceneState.unlinked;
         }
 
         public ReadOnlyCollection<SimulatedObject> GetSimulatedObjects()
@@ -112,17 +112,17 @@ namespace ParkSimulator
             return objects.AsReadOnly<SimulatedObject>();
         }
 
-        public void LoadSimulatedObject(SimulatedObject o)
+        void LinkObject(SimulatedObject o)
         {
             var components = o.GetComponents();
             for (int j = 0; j < components.Count; j++)
             {
-                LoadComponent(components[j]);
+                LinkComponent(components[j]);
             }
 
         }
 
-        public void LoadComponent(Component c)
+        public void LinkComponent(Component c)
         {
             var fields = c.GetFieldsInfo();
 
@@ -145,17 +145,17 @@ namespace ParkSimulator
             }
         }
 
-        public void UnloadSimulatedObject(SimulatedObject o)
+        void UnlinkObject(SimulatedObject o)
         {
             var components = o.GetComponents();
             for (int j = 0; j < components.Count; j++)
             {
-                UnloadComponent(components[j]);
+                UnlinkComponent(components[j]);
             }
 
         }
 
-        public void UnloadComponent(Component c)
+        public void UnlinkComponent(Component c)
         {
             var fields = c.GetFieldsInfo();
 

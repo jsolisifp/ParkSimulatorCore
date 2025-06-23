@@ -86,8 +86,8 @@ namespace ParkSimulator
 
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.loaded) { scene.LoadComponent(c); }
-                else if(scene.State == SimulatedSceneState.playing) { scene.LoadComponent(c); c.Start(); }
+                if(scene.State == SimulatedSceneState.linked) { scene.LinkComponent(c); }
+                else if(scene.State == SimulatedSceneState.playing) { scene.LinkComponent(c); c.Start(); }
             }
 
         }
@@ -96,8 +96,8 @@ namespace ParkSimulator
         {
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.loaded) { scene.UnloadComponent(c); }
-                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnloadComponent(c); }
+                if(scene.State == SimulatedSceneState.linked) { scene.UnlinkComponent(c); }
+                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnlinkComponent(c); }
             }
 
             components.Remove(c);

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Text;
 
 namespace ParkSimulator
 {
@@ -134,6 +135,7 @@ namespace ParkSimulator
                     {
                         if(savedSceneFileName == null) { saveAs = true; }
                         else { Simulation.SaveScene(ref savedSceneFileName); menu = MenuId.main; }
+
                         menu = MenuId.main;
                     }
                     else if (option == MenuSceneOptionLoad)

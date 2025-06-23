@@ -18,12 +18,20 @@ namespace ParkSimulator
 
         public override object? Load(string id)
         {
-            return default;
+            string serialized = File.ReadAllText(storage.BasePath + id);
+
+            SimulatedScene scene = SceneSerializer.Deserialize(serialized);
+
+            return scene;
         }
 
         public override void Save(ref string id, object resource)
         {
             Debug.Assert(typeof(SimulatedScene) == resource.GetType());
+
+            string serialized = SceneSerializer.Serialize((SimulatedScene)resource);
+
+            File.WriteAllText(storage.BasePath + id, serialized);
         }
 
         public override void Unload(string id)

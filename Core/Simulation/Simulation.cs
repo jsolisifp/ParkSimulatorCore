@@ -28,7 +28,10 @@ namespace ParkSimulator
         static Config? config;
         static Random? random;
 
-        public static void Init(Config _config, Storage? _storage, Render? _rendering)
+        static string? playingTemporarySceneResourceId;
+        static SimulatedScene? playingPreviousScene;
+
+        public static void Init(Config _config, Storage? _storage = null, Render? _rendering = null)
         {
             Debug.Assert(state == SimulationState.uninitialized, "Simulation is already initialized");
 
@@ -42,8 +45,9 @@ namespace ParkSimulator
 
             scene = new SimulatedScene();
             sceneResourceId = null;
+            scene.Link();
 
-            scene.Load();
+            playingTemporarySceneResourceId = null;
         }
 
         public static void NewScene()
@@ -51,13 +55,13 @@ namespace ParkSimulator
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(storage != null, "You must create a storage");
 
-            if(scene != null) { scene.Unload(); }
+            if(scene != null) { scene.Unlink(); }
             if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
 
             scene = new SimulatedScene();
             sceneResourceId = null;
 
-            scene.Load();
+            scene.Link();
         }
 
         public static void LoadScene(string resourceId)
@@ -66,16 +70,16 @@ namespace ParkSimulator
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
-            if(scene != null) { scene.Unload(); }
+            if(scene != null) { scene.Unlink(); }
             if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
 
             sceneResourceId = resourceId;
             storage.AddReference(resourceId, Storage.typeIdScene);
             scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
 
-            Debug.Assert(scene != null, "Cannot load scene");
+            Debug.Assert(scene != null, "Cannot load scene resource");
 
-            scene.Load();
+            scene.Link();
         }
 
         public static void SaveScene(ref string resourceId)
@@ -84,8 +88,26 @@ namespace ParkSimulator
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
+            scene.Unlink();
+
+            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+
             storage.SaveResource(ref resourceId, Storage.typeIdScene, scene);
+
+            storage.AddReference(resourceId, Storage.typeIdScene);
+            scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
+            sceneResourceId = resourceId;
+
+            Debug.Assert(scene != null, "Cannot load scene resource");
+
+            scene.Link();
+
         }
+
+        //public static bool IsSceneSaved()
+        //{
+        //    return sceneResourceId != null;
+        //}
         
 
         public static void Play()
@@ -93,6 +115,17 @@ namespace ParkSimulator
             Debug.Assert(scene != null, "You must create a new scene or load one from storage before playing");
             Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+            //Debug.Assert(sceneResourceId != null, "Scene must be saved before ");
+
+            scene.Unlink();
+
+            playingPreviousScene = scene;
+            playingTemporarySceneResourceId = Guid.NewGuid().ToString();
+            storage.SaveResource(ref playingTemporarySceneResourceId, Storage.typeIdScene, scene);
+
+            storage.AddReference(playingTemporarySceneResourceId, Storage.typeIdScene);
+            scene = storage.GetLoadedResource<SimulatedScene>(playingTemporarySceneResourceId);
+            scene.Link();
 
             random = new Random(scene.Seed);
 
@@ -115,8 +148,17 @@ namespace ParkSimulator
         {
             Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+            Debug.Assert(playingTemporarySceneResourceId != null, "Temporary playing scene not saved");
 
             scene.Stop();
+
+            scene.Unlink();
+
+            storage.RemoveReference(playingTemporarySceneResourceId, Storage.typeIdScene);
+
+            scene = playingPreviousScene;
+
+            scene.Link();
 
             state = SimulationState.stopped;
         }
@@ -127,7 +169,7 @@ namespace ParkSimulator
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
             Debug.Assert(storage != null, "You must create a storage");
 
-            scene.Unload();
+            scene.Unlink();
             scene = null;
 
             storage?.Finish();
