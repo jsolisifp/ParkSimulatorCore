@@ -45,6 +45,8 @@ namespace ParkSimulator
             clearColor.g = (byte)config.GetIntValue("renderClearColorG", 255);
             clearColor.b = (byte)config.GetIntValue("renderClearColorB", 120);
 
+            if(!Directory.Exists(outputPath)) { Directory.CreateDirectory(outputPath); }
+
             outputBuffer = new Color24[outputWidth, outputHeight];
 
             Clear();

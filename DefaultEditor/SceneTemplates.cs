@@ -13,19 +13,19 @@ namespace ParkSimulator
             SimulatedObject rollerCoasterB;
             SimulatedObject rollerCoasterC;
             SimulatedObject rollerCoasterD;
-            Location locationComponentA;
-            Location locationComponentB;
-            Location locationComponentC;
-            Location locationComponentD;
-            PictureRenderer rendererComponentA;
-            PictureRenderer rendererComponentB;
-            PictureRenderer rendererComponentC;
-            PictureRenderer rendererComponentD;
+            TestLocation locationComponentA;
+            TestLocation locationComponentB;
+            TestLocation locationComponentC;
+            TestLocation locationComponentD;
+            TestRenderer rendererComponentA;
+            TestRenderer rendererComponentB;
+            TestRenderer rendererComponentC;
+            TestRenderer rendererComponentD;
 
             rollerCoasterA = new SimulatedObject();
             rollerCoasterA.Name = "RollercoasterA";
 
-            locationComponentA = new Location();
+            locationComponentA = new TestLocation();
             locationComponentA.Coordinates = new Vector3(-40, 0, -30);
             locationComponentA.Capacity = 10;
             locationComponentA.Occupation = 10;
@@ -33,7 +33,7 @@ namespace ParkSimulator
 
             rollerCoasterA.AddComponent(locationComponentA);
 
-            rendererComponentA = new PictureRenderer();
+            rendererComponentA = new TestRenderer();
             rendererComponentA.Size = 5.0f;
             rendererComponentA.Color = new Vector3(0.5f, 0, 0);
 
@@ -44,7 +44,7 @@ namespace ParkSimulator
             rollerCoasterB = new SimulatedObject();
             rollerCoasterB.Name = "RollercoasterB";
 
-            locationComponentB = new Location();
+            locationComponentB = new TestLocation();
             locationComponentB.Coordinates = new Vector3(80, 0, -80);
             locationComponentB.Capacity = 5;
             locationComponentB.Occupation = 0;
@@ -52,7 +52,7 @@ namespace ParkSimulator
 
             rollerCoasterB.AddComponent(locationComponentB);
 
-            rendererComponentB = new PictureRenderer();
+            rendererComponentB = new TestRenderer();
             rendererComponentB.Size = 5.0f;
             rendererComponentB.Color = new Vector3(0, 0.5f, 0);
 
@@ -63,7 +63,7 @@ namespace ParkSimulator
             rollerCoasterC = new SimulatedObject();
             rollerCoasterC.Name = "RollercoasterC";
 
-            locationComponentC = new Location();
+            locationComponentC = new TestLocation();
             locationComponentC.Coordinates = new Vector3(20, 0, 40);
             locationComponentC.Capacity = 3;
             locationComponentC.Occupation = 0;
@@ -71,7 +71,7 @@ namespace ParkSimulator
 
             rollerCoasterC.AddComponent(locationComponentC);
 
-            rendererComponentC = new PictureRenderer();
+            rendererComponentC = new TestRenderer();
             rendererComponentC.Size = 5.0f;
             rendererComponentC.Color = new Vector3(0, 0, 0.5f);
 
@@ -83,7 +83,7 @@ namespace ParkSimulator
             rollerCoasterD = new SimulatedObject();
             rollerCoasterD.Name = "RollercoasterD";
 
-            locationComponentD = new Location();
+            locationComponentD = new TestLocation();
             locationComponentD.Coordinates = new Vector3(-80, 0, 80);
             locationComponentD.Capacity = 5;
             locationComponentD.Occupation = 0;
@@ -91,7 +91,7 @@ namespace ParkSimulator
 
             rollerCoasterD.AddComponent(locationComponentD);
 
-            rendererComponentD = new PictureRenderer();
+            rendererComponentD = new TestRenderer();
             rendererComponentD.Size = 5.0f;
             rendererComponentD.Color = new Vector3(0.5f, 0.5f, 0);
 

@@ -3,17 +3,17 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public class Location : Component
+    public class TestLocation : Component
     {
         public Vector3 Coordinates { get; set; }
         public int Capacity { get; set; } = 10;
         public int Occupation { get; set; } = 0;
-        public Location? Neighbour { get; set; }
+        public TestLocation? Neighbour { get; set; }
         public ResourcePointer Description { get; set; }
 
-        Location? neighbourLocation;
+        TestLocation? neighbourLocation;
 
-        public Location()
+        public TestLocation()
         {
             Coordinates = new Vector3(0, 0, 0);
             Neighbour = null;
@@ -21,7 +21,7 @@ namespace ParkSimulator
 
         public override void Start()
         {
-            neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<Location>();
+            neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<TestLocation>();
         }
 
         public override void Step()
@@ -32,6 +32,8 @@ namespace ParkSimulator
             {
                 if(Simulation.Random.Next() % 2 == 0 && Occupation > 0 && neighbourLocation.Occupation < neighbourLocation.Capacity)
                 {
+                    Simulation.Log?.LogMessage(GetSimulatedObject()?.Name, "Moving visitor to " + neighbourLocation?.GetSimulatedObject()?.Name);
+
                     Occupation --;
                     neighbourLocation.Occupation ++;
                 }

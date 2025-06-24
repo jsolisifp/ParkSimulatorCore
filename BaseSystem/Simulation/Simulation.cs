@@ -15,6 +15,7 @@ namespace ParkSimulator
         public static SimulatedScene? Scene { get { return scene; } }
         public static Storage? Storage { get { return storage; } }
         public static Render? Render { get { return render; } }
+        public static Log? Log { get { return log; } }
         public static Random? Random { get { return random; } } 
 
 
@@ -23,23 +24,26 @@ namespace ParkSimulator
         static string? sceneResourceId;
         static Storage? storage;
         static Render? render;
+        static Log? log;
         static Config? config;
         static Random? random;
 
         static string? playingTemporarySceneResourceId;
         static SimulatedScene? playingPreviousScene;
 
-        public static void Init(Config _config, Storage? _storage = null, Render? _rendering = null)
+        public static void Init(Config _config, Storage? _storage = null, Render? _rendering = null, Log? _log = null)
         {
             Debug.Assert(state == SimulationState.uninitialized, "Simulation is already initialized");
 
             storage = _storage;
             config = _config;
             render = _rendering;
+            log = _log;
             state = SimulationState.stopped;
 
             storage?.Init(config);
             render?.Init(config);
+            log?.Init(config);
 
             scene = new SimulatedScene();
             sceneResourceId = null;
@@ -182,6 +186,9 @@ namespace ParkSimulator
 
             render?.Finish();
             render = null;
+
+            log?.Finish();
+            log = null;
 
             state = SimulationState.uninitialized;
 

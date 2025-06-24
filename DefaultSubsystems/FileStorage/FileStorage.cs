@@ -10,6 +10,8 @@ namespace ParkSimulator
         {
             BasePath = config.GetTextValue("storageBasePath", "Resources\\");
 
+            if(!Directory.Exists(BasePath)) { Directory.CreateDirectory(BasePath); }
+
             loaders.Add(typeIdScene, new FileSceneLoader(this));
             loaders.Add(typeIdText, new FileTextLoader(this));
         }

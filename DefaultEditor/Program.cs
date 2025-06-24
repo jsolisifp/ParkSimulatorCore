@@ -79,8 +79,9 @@ namespace ParkSimulator
 
             Storage storage = new FileStorage();
             Render rendering = new PictureRender();
+            Log log = new FileLog();
 
-            Simulation.Init(config, storage, rendering);
+            Simulation.Init(config, storage, rendering, log);
 
             // Create initial scene
 

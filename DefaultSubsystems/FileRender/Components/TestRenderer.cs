@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public class PictureRenderer : Component
+    public class TestRenderer : Component
     {
         public Vector3 Color { get; set; }
         public float Size { get; set; } = 5;
@@ -12,9 +12,9 @@ namespace ParkSimulator
 
 
         PictureRender? render;
-        Location? location;
+        TestLocation? location;
 
-        public PictureRenderer()
+        public TestRenderer()
         {
             render = null;
         }
@@ -29,7 +29,7 @@ namespace ParkSimulator
             Debug.Assert(simulatedObject != null, "El componente no está añadido a un objeto");
 
             render ??= (PictureRender)Simulation.Render;
-            location ??= simulatedObject.GetComponent<Location>();
+            location ??= simulatedObject.GetComponent<TestLocation>();
 
             Debug.Assert(location != null, "Falta el componente location");
 
@@ -41,7 +41,7 @@ namespace ParkSimulator
             p = new Vector2(location.Coordinates.X, location.Coordinates.Z) - Vector2.One * size / 2;
             render.DrawRect(p, Vector2.One * size, new PictureRender.Color24(Color));
 
-            Location? neighbourLocation = location?.Neighbour?.GetSimulatedObject()?.GetComponent<Location>();
+            TestLocation? neighbourLocation = location?.Neighbour?.GetSimulatedObject()?.GetComponent<TestLocation>();
 
             if(neighbourLocation != null)
             {
