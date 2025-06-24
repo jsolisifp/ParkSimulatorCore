@@ -224,13 +224,16 @@ namespace ParkSimulator
                             string serializedValue = line.Split(':')[1];
 
                             var createdComponentFields = createdComponent?.GetFieldsInfo();
+
+                            Debug.Assert(createdComponentFields != null);
+
                             ComponentFieldInfo? matchingField = FindFieldInfo(fieldName, createdComponentFields);
 
                             if(matchingField.HasValue)
                             {
                                 if(matchingField.Value.type == fieldTypeName)
                                 {
-                                    Object value = null;
+                                    Object? value = null;
 
                                     if (fieldTypeName == "Single") { value = DeserializeSingle(serializedValue); }
                                     else if (fieldTypeName == "Int32") { value = DeserializeInt32(serializedValue); }
@@ -267,6 +270,8 @@ namespace ParkSimulator
                                         {
                                             int componentId = DeserializeInt32(serializedValue);
 
+                                            Debug.Assert(createdComponent != null);
+
                                             ComponentReference reference = new() { targetComponent = createdComponent,
                                                                                             targetFieldName = fieldName,
                                                                                             referencedComponentId = componentId };
@@ -282,6 +287,8 @@ namespace ParkSimulator
 
                                     if (value != null)
                                     {
+                                        Debug.Assert(createdComponent != null);
+
                                         createdComponent.SetFieldValue<object>(fieldName, value, false);
                                     }
 
@@ -289,6 +296,8 @@ namespace ParkSimulator
                             }
 
                         }
+
+                        Debug.Assert(createdComponent != null);
 
                         simObject.AddComponent(createdComponent);
 

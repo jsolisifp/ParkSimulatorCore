@@ -32,9 +32,12 @@ namespace ParkSimulator
             {
                 if(Simulation.Random.Next() % 2 == 0 && Occupation > 0 && neighbourLocation.Occupation < neighbourLocation.Capacity)
                 {
-                    Simulation.Log?.LogMessage(GetSimulatedObject()?.Name, "Moving visitor to " + neighbourLocation?.GetSimulatedObject()?.Name);
+                    Simulation.Log?.LogMessage(GetSimulatedObject()?.Name + "", "Moving visitor to " + neighbourLocation?.GetSimulatedObject()?.Name);
 
                     Occupation --;
+
+                    Debug.Assert(neighbourLocation != null);
+
                     neighbourLocation.Occupation ++;
                 }
             }
