@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace ParkSimulator
 {
@@ -18,7 +13,7 @@ namespace ParkSimulator
 
         public override object? Load(string id)
         {
-            string r = File.ReadAllText(storage.BasePath + id);
+            string r = File.ReadAllText(storage.BasePath + id + "." + Storage.typeIdText);
 
             return r;
         }
@@ -32,5 +27,11 @@ namespace ParkSimulator
         {
             // Nothing to do
         }
+
+        public override void Delete(string id)
+        {
+            File.Delete(storage.BasePath + id + "." + Storage.typeIdText);
+        }
+
     }
 }

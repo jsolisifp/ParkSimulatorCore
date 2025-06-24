@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ParkSimulator
 {
@@ -13,6 +7,9 @@ namespace ParkSimulator
     {
         public Vector3 Color { get; set; }
         public float Size { get; set; } = 5;
+        public float PointSize { get; set; } = 2;
+        public Vector3 PointColor { get; set; } = new Vector3(0.0f, 0.0f, 0.0f);
+
 
         PictureRender? render;
         Location? location;
@@ -44,7 +41,7 @@ namespace ParkSimulator
             p = new Vector2(location.Coordinates.X, location.Coordinates.Z) - Vector2.One * size / 2;
             render.DrawRect(p, Vector2.One * size, new PictureRender.Color24(Color));
 
-            Location? neighbourLocation = location?.Neighbour?.GetAttachedSimulatedObject()?.GetComponent<Location>();
+            Location? neighbourLocation = location?.Neighbour?.GetSimulatedObject()?.GetComponent<Location>();
 
             if(neighbourLocation != null)
             {
@@ -55,6 +52,8 @@ namespace ParkSimulator
                 PictureRender.Color24 color = new (Color);
                 render.DrawLine(p1, p2, color);
             }
+
+            render.DrawDisc(new Vector2(location.Coordinates.X, location.Coordinates.Z), PointSize, new PictureRender.Color24(PointColor));
         }
 
     }

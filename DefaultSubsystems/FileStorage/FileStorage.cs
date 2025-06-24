@@ -1,5 +1,4 @@
-﻿﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
+﻿using System.Collections.ObjectModel;
 
 namespace ParkSimulator
 {
@@ -28,12 +27,16 @@ namespace ParkSimulator
 
             for (int i = 0; i < files.Length; i++)
             {
-                ResourcePointer info = new() { resourceId = files[i].Substring(BasePath.Length), typeId = Path.GetExtension(files[i]) };
+                ResourcePointer info = new(Path.GetFileNameWithoutExtension(files[i].Substring(BasePath.Length)), Path.GetExtension(files[i]).Remove(0,1));
                 infos.Add(info);
             }
 
             return infos.AsReadOnly<ResourcePointer>();
         }
 
+        public override bool ExistsResource(string resourceId, string typeId)
+        {
+            return File.Exists(BasePath + resourceId + '.' + typeId);
+        }
     }
 }

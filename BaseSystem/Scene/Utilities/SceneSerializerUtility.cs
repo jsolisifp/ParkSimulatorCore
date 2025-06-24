@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Numerics;
-using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Text;
-using System.Threading.Tasks;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace ParkSimulator
 {
-    public class SceneSerializer
+    public class SceneSerializerUtility
     {
+        const string nullSerializedValue = "null";
+
         public static string Serialize(SimulatedScene scene)
         {
             StringBuilder builder = new();
@@ -70,7 +65,7 @@ namespace ParkSimulator
                     {
                         ComponentFieldInfo field = fields[k];
 
-                        Object value = component.GetFieldValue<Object>(field.name);
+                        Object? value = component.GetFieldValue<Object>(field.name);
 
                         builder.AppendLine(tab + tab + tab + "Name:" + field.name);
                         builder.AppendLine(tab + tab + tab + "Type:" + field.type);
@@ -79,39 +74,62 @@ namespace ParkSimulator
 
                         if(field.type == "String")
                         {
+                            Debug.Assert(value != null);
+
                             serializedValue = SerializeString((string)value);
                         }
                         else if (field.type == "Single")
                         {
+                            Debug.Assert(value != null);
+
                             serializedValue = SerializeSingle((Single)value);
                         }
                         else if (field.type == "Int32")
                         {
+                            Debug.Assert(value != null);
+
                             serializedValue = SerializeInt32((Int32)value);
                         }
                         else if(field.type == "Boolean")
                         {
+                            Debug.Assert(value != null);
+
                             serializedValue = SerializeBool((Boolean)value);
                         }
                         else if (field.type == "Vector3")
                         {
+                            Debug.Assert(value != null);
+
                             Vector3 v = (Vector3)value;
                             serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z);
                         }
                         else if (field.type == "Vector4")
                         {
+                            Debug.Assert(value != null);
+
                             Vector4 v = (Vector4)value;
                             serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z) + "," + SerializeSingle(v.W);
                         }
                         else if(field.isResourcePointer)
                         {
+                            Debug.Assert(value != null);
+
                             ResourcePointer p = (ResourcePointer)value;
-                            serializedValue = p.resourceId + "," + p.typeId;
+
+                            if(p.ResourceId != null) { serializedValue = p.ResourceId + "," + p.TypeId; }
+                            else { serializedValue = nullSerializedValue; }
                         }
                         else if (field.isComponent)
                         {
-                            int id = componentToId[(Component)value];
-                            serializedValue = SerializeInt32(id);
+                            if((Component?)value != null)
+                            {
+                                int id = componentToId[(Component)value];
+                                serializedValue = SerializeInt32(id);
+                            }
+                            else
+                            {
+                                serializedValue = nullSerializedValue;
+                            }
                         }
                         else
                         {
@@ -232,24 +250,39 @@ namespace ParkSimulator
                                     }
                                     else if (fieldTypeName == "String") { value = serializedValue; }
                                     else if(fieldTypeName == "ResourcePointer")
-                                    {   string[] parts = serializedValue.Split(',');
-                                        value = new ResourcePointer(parts[0], parts[1]);
+                                    { 
+                                        if(serializedValue != nullSerializedValue)
+                                        {
+                                            string[] parts = serializedValue.Split(',');
+                                            value = new ResourcePointer(parts[0], parts[1]);
+                                        }
+                                        else
+                                        {
+                                            value = new ResourcePointer();
+                                        }
                                     }
                                     else if(matchingField.Value.isComponent)
                                     {
-                                        int componentId = DeserializeInt32(serializedValue);
+                                        if(serializedValue != nullSerializedValue)
+                                        {
+                                            int componentId = DeserializeInt32(serializedValue);
 
-                                        ComponentReference reference = new() { targetComponent = createdComponent,
-                                                                                        targetFieldName = fieldName,
-                                                                                        referencedComponentId = componentId };
+                                            ComponentReference reference = new() { targetComponent = createdComponent,
+                                                                                            targetFieldName = fieldName,
+                                                                                            referencedComponentId = componentId };
                                         
-                                        createdComponentsReferences.Add(reference);
+                                            createdComponentsReferences.Add(reference);
+                                        }
+                                        else
+                                        {
+                                            // nothing to do as null is already the default value for a component reference
+                                        }
 
                                     }
 
                                     if (value != null)
                                     {
-                                        createdComponent.SetFieldValue<object>(fieldName, value);
+                                        createdComponent.SetFieldValue<object>(fieldName, value, false);
                                     }
 
                                 }
@@ -278,7 +311,7 @@ namespace ParkSimulator
             for(int i = 0; i < createdComponentsReferences.Count; i++)
             {
                 ComponentReference reference = createdComponentsReferences[i];
-                reference.targetComponent.SetFieldValue<object>(reference.targetFieldName, componentsById[reference.referencedComponentId]);
+                reference.targetComponent.SetFieldValue<object>(reference.targetFieldName, componentsById[reference.referencedComponentId], false);
             }
 
             return scene;

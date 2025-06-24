@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 
 namespace ParkSimulator
 {
@@ -18,9 +13,9 @@ namespace ParkSimulator
 
         public override object? Load(string id)
         {
-            string serialized = File.ReadAllText(storage.BasePath + id);
+            string serialized = File.ReadAllText(storage.BasePath + id + "." + Storage.typeIdScene);
 
-            SimulatedScene scene = SceneSerializer.Deserialize(serialized);
+            SimulatedScene scene = SceneSerializerUtility.Deserialize(serialized);
 
             return scene;
         }
@@ -29,14 +24,19 @@ namespace ParkSimulator
         {
             Debug.Assert(typeof(SimulatedScene) == resource.GetType());
 
-            string serialized = SceneSerializer.Serialize((SimulatedScene)resource);
+            string serialized = SceneSerializerUtility.Serialize((SimulatedScene)resource);
 
-            File.WriteAllText(storage.BasePath + id, serialized);
+            File.WriteAllText(storage.BasePath + id + "." + Storage.typeIdScene, serialized);
         }
 
         public override void Unload(string id)
         {
             // Nothing to do
+        }
+
+        public override void Delete(string id)
+        {
+            File.Delete(storage.BasePath + id + "." + Storage.typeIdScene);
         }
     }
 }

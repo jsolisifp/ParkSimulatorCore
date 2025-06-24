@@ -2,7 +2,7 @@
 using System.Numerics;
 
 namespace ParkSimulator
-{ 
+{
     public class Location : Component
     {
         public Vector3 Coordinates { get; set; }
@@ -21,7 +21,7 @@ namespace ParkSimulator
 
         public override void Start()
         {
-            neighbourLocation = Neighbour?.GetAttachedSimulatedObject()?.GetComponent<Location>();
+            neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<Location>();
         }
 
         public override void Step()

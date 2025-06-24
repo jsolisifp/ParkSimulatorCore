@@ -1,28 +1,14 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace ParkSimulator
 {
-    public struct ResourcePointer
-    {
-        public string? resourceId;
-        public string? typeId;
-
-        public object? resource;
-
-        public ResourcePointer() { resourceId = null; typeId = null; }
-        public ResourcePointer(string _resourceId, string _typeId) { resourceId = _resourceId; typeId = _typeId; }
-
-        public T? Get<T>()
-        {
-            return (T?) resource;
-        }
-
-    };
-
     public abstract class Storage : SimulationSubsystem
     {
+        public delegate void ResourceDeletedEventHandler(string _resourceId, string _typeId);
+
+        public event ResourceDeletedEventHandler? ResourceDeletedEvent;
+
         public const string typeIdScene = "scene";
         public const string typeIdText = "txt";
 
@@ -47,7 +33,7 @@ namespace ParkSimulator
             return count;
         }
 
-        public void AddReference(string resourceId, string typeId)
+        internal void AddReference(string resourceId, string typeId)
         {
             if(!loadedResources.ContainsKey(resourceId))
             {
@@ -65,7 +51,7 @@ namespace ParkSimulator
 
         }
 
-        public void RemoveReference(string resourceId, string typeId)
+        internal void RemoveReference(string resourceId, string typeId)
         {
             Debug.Assert(referenceCounters.ContainsKey(resourceId), "Unbalanced remove reference for resource " + resourceId);
             referenceCounters[resourceId] --;
@@ -79,6 +65,7 @@ namespace ParkSimulator
             }
         }
 
+
         public T? GetLoadedResource<T>(string resourceId)
         {
             return (T?)loadedResources[resourceId];
@@ -88,6 +75,17 @@ namespace ParkSimulator
         {
             loaders[typeId].Save(ref resourceId, resource);
         }
+
+        public void DeleteResource(string resourceId, string typeId)
+        {
+            ResourceDeletedEvent?.Invoke(resourceId, typeId);
+
+            Debug.Assert(!loadedResources.ContainsKey(resourceId), "Resource is loaded, remove all references before deleting it");
+
+            loaders[typeId].Delete(resourceId);
+        }
+
+        public abstract bool ExistsResource(string resourceId, string typeId);
 
         public abstract ReadOnlyCollection<ResourcePointer> GetResourcePointers();
     }

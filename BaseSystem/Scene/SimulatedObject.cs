@@ -12,6 +12,10 @@ namespace ParkSimulator
 
     public class SimulatedObject
     {
+        public delegate void ComponentDeletedEventHandler(Component component);
+
+        public event ComponentDeletedEventHandler? componentRemovedEvent;
+
         public string Name { get; set; }
         public bool Active { get; set; }
 
@@ -37,6 +41,11 @@ namespace ParkSimulator
         public void DetachFromScene()
         {
             scene = null;
+        }
+
+        public SimulatedScene? GetAttachedScene()
+        {
+            return scene;
         }
 
         public void Start()
@@ -86,8 +95,8 @@ namespace ParkSimulator
 
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.linked) { scene.LinkComponent(c); }
-                else if(scene.State == SimulatedSceneState.playing) { scene.LinkComponent(c); c.Start(); }
+                if(scene.State == SimulatedSceneState.linked) { scene.LinkComponentResources(c); }
+                else if(scene.State == SimulatedSceneState.playing) { scene.LinkComponentResources(c); c.Start(); }
             }
 
         }
@@ -96,12 +105,14 @@ namespace ParkSimulator
         {
             if(scene != null)
             {
-                if(scene.State == SimulatedSceneState.linked) { scene.UnlinkComponent(c); }
-                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnlinkComponent(c); }
+                if(scene.State == SimulatedSceneState.linked) { scene.UnlinkComponentResources(c); }
+                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnlinkComponentResources(c); }
             }
 
+            componentRemovedEvent?.Invoke(c);
+
             components.Remove(c);
-            c.AttachToSimulatedObject(null);
+            c.DetachFromSimulatedObject();
         }
 
         public ReadOnlyCollection<Component> GetComponents()

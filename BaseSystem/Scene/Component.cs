@@ -1,9 +1,8 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace ParkSimulator
-{ 
+{
     public struct ComponentFieldInfo
     {
         public string name;
@@ -58,9 +57,36 @@ namespace ParkSimulator
             return (T?)propertiesByName[name].GetValue(this);
         }
 
-        public void SetFieldValue<T>(string name, T? value)
+        public void SetFieldValue<T>(string name, T? value, bool manageResourceLinking = true)
         {
+            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+            if(simScene != null && manageResourceLinking)
+            {
+                if(simScene.State != SimulatedSceneState.unlinked)
+                {
+                    if(typeof(T).Name == "ResourcePointer")
+                    {
+                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        p.UnlinkResource();                                        
+                    }
+                }
+            }
+
             propertiesByName[name].SetValue(this, value);
+
+            if(simScene != null && manageResourceLinking)
+            {
+                if(simScene.State != SimulatedSceneState.unlinked)
+                {
+                    if(typeof(T).Name == "ResourcePointer")
+                    {
+                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        p.LinkResource();                                        
+                    }
+                }
+            }
+
         }
 
         public virtual void Start() { }
@@ -69,12 +95,17 @@ namespace ParkSimulator
         public virtual void Stop() { }
 
 
-        public void AttachToSimulatedObject(SimulatedObject? so)
+        internal void AttachToSimulatedObject(SimulatedObject? so)
         {
             simulatedObject = so;
         }
 
-        public SimulatedObject? GetAttachedSimulatedObject()
+        internal void DetachFromSimulatedObject()
+        {
+            simulatedObject = null;
+        }
+
+        public SimulatedObject? GetSimulatedObject()
         {
             return simulatedObject;
         }

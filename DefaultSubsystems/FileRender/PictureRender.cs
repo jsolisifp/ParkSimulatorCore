@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
+using System.Drawing;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ParkSimulator
 {
@@ -67,17 +63,48 @@ namespace ParkSimulator
             {
                 for(int x = 0; x < (int)size.X; x ++)
                 {
-                    int absX = outputWidth / 2 + (int)position.X + x;
-                    int absY = outputHeight / 2 - ((int)position.Y + y);
+                    int coordX = (int)position.X + x;
+                    int coordY = (int)position.Y + y;
+                    int outputX = outputWidth / 2 + coordX;
+                    int outputY = outputHeight / 2 - coordY;
 
-                    if(absX >= 0 && absX <= outputBuffer.GetLength(0) - 1 &&
-                       absY >= 0 && absY <= outputBuffer.GetLength(1) - 1)
+                    if(outputX >= 0 && outputX <= outputBuffer.GetLength(0) - 1 &&
+                       outputY >= 0 && outputY <= outputBuffer.GetLength(1) - 1)
                     {
-                        outputBuffer[absX, absY] = color;
+                        outputBuffer[outputX, outputY] = color;
                     }
                 }
 
             }
+        }
+
+        public void DrawDisc(Vector2 position, float radius, Color24 color)
+        {
+            Debug.Assert(outputBuffer != null, "Subsistema no inicializado");
+
+            int diameter = (int)(2*radius);
+            
+            for(int y = 0; y < diameter; y ++)
+            {
+                for(int x = 0; x < diameter; x ++)
+                {
+                    int coordX = (int)(position.X - diameter / 2) + x;
+                    int coordY = (int)(position.Y - diameter / 2) + y;
+                    int outputX = outputWidth / 2  + coordX;
+                    int outputY = outputHeight / 2 - coordY;
+
+                    if(Vector2.Distance(new Vector2(coordX, coordY), position) <= radius)
+                    {
+                        if(outputX >= 0 && outputX <= outputBuffer.GetLength(0) - 1 &&
+                           outputY >= 0 && outputY <= outputBuffer.GetLength(1) - 1)
+                        { outputBuffer[outputX, outputY] = color; }
+                    }
+
+                }
+
+            }
+            
+
         }
 
         public void DrawLine(Vector2 position1, Vector2 position2, Color24 color)
@@ -94,13 +121,13 @@ namespace ParkSimulator
 
             for(int i = 0; i < steps; i ++)
             {
-                int absX = (int)(outputWidth / 2 + (int)position1.X + i * stepXWidth * stepXSign);
-                int absY = (int)(outputHeight / 2 - ((int)position1.Y + i * stepYHeight * stepYSign));
+                int outputX = (int)(outputWidth / 2 + (int)position1.X + i * stepXWidth * stepXSign);
+                int outputY = (int)(outputHeight / 2 - ((int)position1.Y + i * stepYHeight * stepYSign));
 
-                if(absX >= 0 && absX <= outputBuffer.GetLength(0) - 1 &&
-                    absY >= 0 && absY <= outputBuffer.GetLength(1) - 1)
+                if(outputX >= 0 && outputX <= outputBuffer.GetLength(0) - 1 &&
+                    outputY >= 0 && outputY <= outputBuffer.GetLength(1) - 1)
                 {
-                    outputBuffer[absX, absY] = color;
+                    outputBuffer[outputX, outputY] = color;
                 }
 
             }

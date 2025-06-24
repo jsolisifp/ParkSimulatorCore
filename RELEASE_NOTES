@@ -1,0 +1,12 @@
+Known limitations
+=================
+
+- Resource files must have unique names (without the extension)
+- Resource files cannot be placed at subfolders
+
+- Custom components should inherit directly from Component class,
+  as multiple levels of inheritance are not supported currently.
+  
+  
+
+
