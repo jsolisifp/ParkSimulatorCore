@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.VisualBasic.FileIO;
+using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 
@@ -78,7 +79,7 @@ namespace ParkSimulator
             Config config = new MemoryConfig();
 
             Storage storage = new FileStorage();
-            Render rendering = new PictureRender();
+            Render rendering = new FileRender();
             Log log = new FileLog();
 
             Simulation.Init(config, storage, rendering, log);
@@ -300,6 +301,40 @@ namespace ParkSimulator
 
         }
 
+        static int AskEnum(string typeName, string message)
+        {
+            Debug.Assert(Simulation.Scene != null, "Scene not assigned");
+
+            int r = 0;
+            bool done = false;
+            int index = -1;
+
+            while (!done)
+            {
+                ComponentEnumInfo enumInfo = Component.GetEnumInfo(typeName);
+
+                for (int i = 0; i < enumInfo.names.Count; i++)
+                { Console.WriteLine("[" + (i + 1) + "]:" + enumInfo.names[i]); }
+
+                Console.Write(message + "?>");
+                string? line = Console.ReadLine();
+
+                if (Int32.TryParse(line, out index))
+                {
+                    if (index >= 1 && index <= enumInfo.names.Count)
+                    {
+                        done = true;
+                        r = index - 1;
+                    }
+                    else { Console.WriteLine("Please enter a numeric index between " + 1 + " and " + enumInfo.names.Count + " (both included)"); }
+                }
+                else { Console.WriteLine("Please enter a numeric index"); }
+            }
+
+            return r;
+        }
+
+
         static string AskComponentName(string message)
         {
             Debug.Assert(Simulation.Scene != null, "Scene not assigned");
@@ -458,21 +493,39 @@ namespace ParkSimulator
         {
             object? r = null;
 
-            if(field.type == "Vector3")
-            {   float x = AskSingle(message + " X");
+            if (field.type == "Vector2")
+            {
+                float x = AskSingle(message + " X");
+                float y = AskSingle(message + " Y");
+
+                r = (object?)(new Vector2(x, y));
+            }
+            else if (field.type == "Vector3")
+            {
+                float x = AskSingle(message + " X");
                 float y = AskSingle(message + " Y");
                 float z = AskSingle(message + " Z");
 
                 r = (object?)(new Vector3(x, y, z));
             }
-            else if(field.type == "Boolean") { r = (object?)AskBool(message); }
-            else if(field.type == "Int32") { r = (object?)AskInt(message); }
-            else if(field.type == "Single") { r = (object?)AskSingle(message); }
-            else if(field.isResourcePointer) { r = (object?)AskResource(message); }
-            else if(field.isComponent)
+            else if (field.type == "Vector4")
+            {
+                float x = AskSingle(message + " X");
+                float y = AskSingle(message + " Y");
+                float z = AskSingle(message + " Z");
+                float w = AskSingle(message + " W");
+
+                r = (object?)(new Vector4(x, y, z, w));
+            }
+            else if (field.type == "Boolean") { r = (object?)AskBool(message); }
+            else if (field.type == "Int32") { r = (object?)AskInt(message); }
+            else if (field.type == "Single") { r = (object?)AskSingle(message); }
+            else if (field.isEnum) { r = (object?)AskEnum(field.type, message); }
+            else if (field.isResourcePointer) { r = (object?)AskResource(message); }
+            else if (field.isComponent)
             {
                 SimulatedObject? simObject = AskObject(message + " referenced object", true);
-                if(simObject != null)
+                if (simObject != null)
                 { r = AskObjectComponent(simObject, message + " referenced component"); }
             }
 
@@ -774,11 +827,21 @@ namespace ParkSimulator
         {
             string value = "*Cannot display*";
 
-            if(f.type == "Vector3")
+            if (f.type == "Vector2")
+            {
+                Vector2? v = c.GetFieldValue<Vector2>(f.name);
+                if (v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + "]"; }
+            }
+            else if (f.type == "Vector3")
             {   Vector3? v = c.GetFieldValue<Vector3>(f.name);
                 if(v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + ", " + v.Value.Z + "]"; }
             }
-            else if(f.type == "Boolean")
+            else if (f.type == "Vector4")
+            {
+                Vector4? v = c.GetFieldValue<Vector4>(f.name);
+                if (v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + ", " + v.Value.Z + ", " + v.Value.W + "]"; }
+            }
+            else if (f.type == "Boolean")
             {   bool? v = c.GetFieldValue<bool>(f.name);
                 if(v.HasValue) { value = v.Value.ToString(); }
             }
@@ -795,11 +858,19 @@ namespace ParkSimulator
                 if(v.ResourceId != null) { value = "[" + v.ResourceId + "]"; }
                 else { value = "[none]"; }
             }
-            else if(f.isComponent)
+            else if(f.isEnum)
+            {
+                int? v = c.GetFieldValue<int>(f.name);
+                if(v != null)
+                {
+                    value = Component.GetEnumInfo(f.type).names[v.Value];
+                }
+            }
+            else if (f.isComponent)
             {
                 Component? v = c.GetFieldValue<Component>(f.name);
-                if(v != null)
-                {   SimulatedObject? so = v.GetSimulatedObject();
+                if (v != null)
+                { SimulatedObject? so = v.GetSimulatedObject();
                     Debug.Assert(so != null, "Component not attached to simulated object");
                     value = "[" + so.Name + "]";
                 }

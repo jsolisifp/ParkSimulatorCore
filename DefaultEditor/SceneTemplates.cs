@@ -9,100 +9,104 @@ namespace ParkSimulator
         {
             Debug.Assert(Simulation.Scene != null, "Scene not assigned");
 
-            SimulatedObject rollerCoasterA;
-            SimulatedObject rollerCoasterB;
-            SimulatedObject rollerCoasterC;
-            SimulatedObject rollerCoasterD;
-            TestLocation locationComponentA;
-            TestLocation locationComponentB;
-            TestLocation locationComponentC;
-            TestLocation locationComponentD;
+            SimulatedObject attractionA;
+            SimulatedObject attractionB;
+            SimulatedObject attractionC;
+            SimulatedObject attractionD;
+            TestAttraction attractionComponentA;
+            TestAttraction attractionComponentB;
+            TestAttraction attractionComponentC;
+            TestAttraction attractionComponentD;
             TestRenderer rendererComponentA;
             TestRenderer rendererComponentB;
             TestRenderer rendererComponentC;
             TestRenderer rendererComponentD;
 
-            rollerCoasterA = new SimulatedObject();
-            rollerCoasterA.Name = "RollercoasterA";
+            attractionA = new SimulatedObject();
+            attractionA.Name = "AttractionA";
 
-            locationComponentA = new TestLocation();
-            locationComponentA.Coordinates = new Vector3(-40, 0, -30);
-            locationComponentA.Capacity = 10;
-            locationComponentA.Occupation = 10;
-            locationComponentA.Description = new ResourcePointer("rollercoaster_a_description", "txt");
+            attractionComponentA = new TestAttraction();
+            attractionComponentA.Type = TestAttractionType.rollercoaster;
+            attractionComponentA.Coordinates = new Vector3(-40, 0, -30);
+            attractionComponentA.Capacity = 10;
+            attractionComponentA.Occupation = 10;
+            attractionComponentA.Description = new ResourcePointer("attraction_a_description", "txt");
 
-            rollerCoasterA.AddComponent(locationComponentA);
+            attractionA.AddComponent(attractionComponentA);
 
             rendererComponentA = new TestRenderer();
             rendererComponentA.Size = 5.0f;
             rendererComponentA.Color = new Vector3(0.5f, 0, 0);
 
-            rollerCoasterA.AddComponent(rendererComponentA);
+            attractionA.AddComponent(rendererComponentA);
 
-            Simulation.Scene.AddSimulatedObject(rollerCoasterA);
+            Simulation.Scene.AddSimulatedObject(attractionA);
 
-            rollerCoasterB = new SimulatedObject();
-            rollerCoasterB.Name = "RollercoasterB";
+            attractionB = new SimulatedObject();
+            attractionB.Name = "AttractionB";
 
-            locationComponentB = new TestLocation();
-            locationComponentB.Coordinates = new Vector3(80, 0, -80);
-            locationComponentB.Capacity = 5;
-            locationComponentB.Occupation = 0;
-            locationComponentB.Description = new ResourcePointer("rollercoaster_b_description", "txt");
+            attractionComponentB = new TestAttraction();
+            attractionComponentB.Type = TestAttractionType.bumperCars;
+            attractionComponentB.Coordinates = new Vector3(80, 0, -80);
+            attractionComponentB.Capacity = 5;
+            attractionComponentB.Occupation = 0;
+            attractionComponentB.Description = new ResourcePointer("attraction_b_description", "txt");
 
-            rollerCoasterB.AddComponent(locationComponentB);
+            attractionB.AddComponent(attractionComponentB);
 
             rendererComponentB = new TestRenderer();
             rendererComponentB.Size = 5.0f;
             rendererComponentB.Color = new Vector3(0, 0.5f, 0);
 
-            rollerCoasterB.AddComponent(rendererComponentB);
+            attractionB.AddComponent(rendererComponentB);
 
-            Simulation.Scene.AddSimulatedObject(rollerCoasterB);
+            Simulation.Scene.AddSimulatedObject(attractionB);
 
-            rollerCoasterC = new SimulatedObject();
-            rollerCoasterC.Name = "RollercoasterC";
+            attractionC = new SimulatedObject();
+            attractionC.Name = "AttractionC";
 
-            locationComponentC = new TestLocation();
-            locationComponentC.Coordinates = new Vector3(20, 0, 40);
-            locationComponentC.Capacity = 3;
-            locationComponentC.Occupation = 0;
-            locationComponentC.Description = new ResourcePointer("rollercoaster_c_description", "txt");
+            attractionComponentC = new TestAttraction();
+            attractionComponentC.Type = TestAttractionType.carousel;
+            attractionComponentC.Coordinates = new Vector3(20, 0, 40);
+            attractionComponentC.Capacity = 3;
+            attractionComponentC.Occupation = 0;
+            attractionComponentC.Description = new ResourcePointer("attraction_c_description", "txt");
 
-            rollerCoasterC.AddComponent(locationComponentC);
+            attractionC.AddComponent(attractionComponentC);
 
             rendererComponentC = new TestRenderer();
             rendererComponentC.Size = 5.0f;
             rendererComponentC.Color = new Vector3(0, 0, 0.5f);
 
-            rollerCoasterC.AddComponent(rendererComponentC);
+            attractionC.AddComponent(rendererComponentC);
 
-            Simulation.Scene.AddSimulatedObject(rollerCoasterC);
+            Simulation.Scene.AddSimulatedObject(attractionC);
 
 
-            rollerCoasterD = new SimulatedObject();
-            rollerCoasterD.Name = "RollercoasterD";
+            attractionD = new SimulatedObject();
+            attractionD.Name = "AttractionD";
 
-            locationComponentD = new TestLocation();
-            locationComponentD.Coordinates = new Vector3(-80, 0, 80);
-            locationComponentD.Capacity = 5;
-            locationComponentD.Occupation = 0;
-            locationComponentD.Description = new ResourcePointer("rollercoaster_d_description", "txt");
+            attractionComponentD = new TestAttraction();
+            attractionComponentD.Type = TestAttractionType.ferrisWheel;
+            attractionComponentD.Coordinates = new Vector3(-80, 0, 80);
+            attractionComponentD.Capacity = 5;
+            attractionComponentD.Occupation = 0;
+            attractionComponentD.Description = new ResourcePointer("attraction_d_description", "txt");
 
-            rollerCoasterD.AddComponent(locationComponentD);
+            attractionD.AddComponent(attractionComponentD);
 
             rendererComponentD = new TestRenderer();
             rendererComponentD.Size = 5.0f;
             rendererComponentD.Color = new Vector3(0.5f, 0.5f, 0);
 
-            rollerCoasterD.AddComponent(rendererComponentD);
+            attractionD.AddComponent(rendererComponentD);
 
-            Simulation.Scene.AddSimulatedObject(rollerCoasterD);
+            Simulation.Scene.AddSimulatedObject(attractionD);
 
-            locationComponentA.Neighbour = locationComponentB;
-            locationComponentB.Neighbour = locationComponentC;
-            locationComponentC.Neighbour = locationComponentD;
-            locationComponentD.Neighbour = locationComponentA;
+            attractionComponentA.Neighbour = attractionComponentB;
+            attractionComponentB.Neighbour = attractionComponentC;
+            attractionComponentC.Neighbour = attractionComponentD;
+            attractionComponentD.Neighbour = attractionComponentA;
 
 
         }

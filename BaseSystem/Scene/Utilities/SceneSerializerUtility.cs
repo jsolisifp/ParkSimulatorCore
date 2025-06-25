@@ -96,6 +96,13 @@ namespace ParkSimulator
 
                             serializedValue = SerializeBool((Boolean)value);
                         }
+                        else if (field.type == "Vector2")
+                        {
+                            Debug.Assert(value != null);
+
+                            Vector2 v = (Vector2)value;
+                            serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y);
+                        }
                         else if (field.type == "Vector3")
                         {
                             Debug.Assert(value != null);
@@ -110,18 +117,26 @@ namespace ParkSimulator
                             Vector4 v = (Vector4)value;
                             serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z) + "," + SerializeSingle(v.W);
                         }
-                        else if(field.isResourcePointer)
+                        else if (field.isEnum)
+                        {
+                            Debug.Assert(value != null);
+
+                            int index = (int)value;
+                            serializedValue = SerializeInt32(index);
+
+                        }
+                        else if (field.isResourcePointer)
                         {
                             Debug.Assert(value != null);
 
                             ResourcePointer p = (ResourcePointer)value;
 
-                            if(p.ResourceId != null) { serializedValue = p.ResourceId + "," + p.TypeId; }
+                            if (p.ResourceId != null) { serializedValue = p.ResourceId + "," + p.TypeId; }
                             else { serializedValue = nullSerializedValue; }
                         }
                         else if (field.isComponent)
                         {
-                            if((Component?)value != null)
+                            if ((Component?)value != null)
                             {
                                 int id = componentToId[(Component)value];
                                 serializedValue = SerializeInt32(id);
@@ -238,6 +253,12 @@ namespace ParkSimulator
                                     if (fieldTypeName == "Single") { value = DeserializeSingle(serializedValue); }
                                     else if (fieldTypeName == "Int32") { value = DeserializeInt32(serializedValue); }
                                     else if (fieldTypeName == "Boolean") { value = DeserializeBool(serializedValue); }
+                                    else if (fieldTypeName == "Vector2")
+                                    {
+                                        string[] parts = serializedValue.Split(',');
+                                        value = new Vector2(DeserializeSingle(parts[0]),
+                                                            DeserializeSingle(parts[1]));
+                                    }
                                     else if (fieldTypeName == "Vector3")
                                     {   string[] parts = serializedValue.Split(',');
                                         value = new Vector3(DeserializeSingle(parts[0]),
@@ -264,18 +285,22 @@ namespace ParkSimulator
                                             value = new ResourcePointer();
                                         }
                                     }
-                                    else if(matchingField.Value.isComponent)
+                                    else if(matchingField.Value.isEnum)
                                     {
-                                        if(serializedValue != nullSerializedValue)
+                                        value = DeserializeInt32(serializedValue);
+                                    }
+                                    else if (matchingField.Value.isComponent)
+                                    {
+                                        if (serializedValue != nullSerializedValue)
                                         {
                                             int componentId = DeserializeInt32(serializedValue);
 
                                             Debug.Assert(createdComponent != null);
 
                                             ComponentReference reference = new() { targetComponent = createdComponent,
-                                                                                            targetFieldName = fieldName,
-                                                                                            referencedComponentId = componentId };
-                                        
+                                                targetFieldName = fieldName,
+                                                referencedComponentId = componentId };
+
                                             createdComponentsReferences.Add(reference);
                                         }
                                         else

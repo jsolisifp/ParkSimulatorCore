@@ -6,6 +6,8 @@ Known limitations
 
 - Custom components should inherit directly from Component class,
   as multiple levels of inheritance are not supported currently.
+- Using the default Storage subsystem, saving a scene and then
+  changing the type of a component's field could lead to errors.
   
   
 

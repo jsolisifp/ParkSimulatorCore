@@ -1,5 +1,7 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace ParkSimulator
 {
@@ -7,9 +9,15 @@ namespace ParkSimulator
     {
         public string name;
         public string type;
+        public bool isEnum;
         public bool isResourcePointer;
         public bool isComponent;
         public bool isWritable;
+    };
+
+    public struct ComponentEnumInfo
+    {
+        public ReadOnlyCollection<string> names;
     };
 
     public abstract class Component
@@ -33,6 +41,46 @@ namespace ParkSimulator
 
         }
 
+
+
+        public static ComponentEnumInfo GetEnumInfo(string typeName)
+        {
+            ComponentEnumInfo r = new();
+
+            List<string> names = new();
+
+            Type? type = null;
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            int k = 0;
+            while(k < assemblies.Length && type == null)
+            {
+                Assembly? a = assemblies[k];
+
+                Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                Type[] types = a.GetTypes();
+
+                int i = 0;
+                while(i < types.Length && type == null)
+                {
+                    Type t = types[i];
+                    if (t.IsEnum && t.Name == typeName) { type = t; }
+                    else { i++; }
+                }
+
+                if (type == null) { k++; }
+
+            }
+
+
+            Debug.Assert(type != null, "Enumerated type " + typeName + " not found");
+
+            r.names = Enum.GetNames(type).AsReadOnly<string>();
+            return r;
+
+        }
+
         public ReadOnlyCollection<ComponentFieldInfo> GetFieldsInfo()
         {
             List<ComponentFieldInfo> fields = new();
@@ -43,6 +91,7 @@ namespace ParkSimulator
                 ComponentFieldInfo f = new();
                 f.name = p.Name;
                 f.type = p.PropertyType.Name;
+                f.isEnum = p.PropertyType.IsEnum;
                 f.isResourcePointer = (p.PropertyType.Name == typeof(ResourcePointer).Name);
                 f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
                 f.isWritable = p.CanWrite;

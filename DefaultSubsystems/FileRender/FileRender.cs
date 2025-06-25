@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public class PictureRender : Render
+    public class FileRender : Render
     {
         int outputWidth;
         int outputHeight;
@@ -29,7 +29,7 @@ namespace ParkSimulator
 
         int frameNumber = 0;
 
-        public PictureRender()
+        public FileRender()
         {
             outputPath = "";
             clearColor = new Color24();
@@ -80,22 +80,25 @@ namespace ParkSimulator
             }
         }
 
-        public void DrawDisc(Vector2 position, float radius, Color24 color)
+        public void DrawEllipse(Vector2 position, Vector2 size, Color24 color)
         {
             Debug.Assert(outputBuffer != null, "Subsistema no inicializado");
 
-            int diameter = (int)(2*radius);
-            
-            for(int y = 0; y < diameter; y ++)
-            {
-                for(int x = 0; x < diameter; x ++)
-                {
-                    int coordX = (int)(position.X - diameter / 2) + x;
-                    int coordY = (int)(position.Y - diameter / 2) + y;
-                    int outputX = outputWidth / 2  + coordX;
-                    int outputY = outputHeight / 2 - coordY;
+            float centerCoordX = position.X + size.X / 2;
+            float centerCoordY = position.Y + size.Y / 2;
 
-                    if(Vector2.Distance(new Vector2(coordX, coordY), position) <= radius)
+            for (int y = 0; y < size.Y; y ++)
+            {
+                for(int x = 0; x < size.X; x ++)
+                {
+                    float coordX = position.X + x;
+                    float coordY = position.Y + y;
+                    int outputX = (int)(outputWidth / 2  + coordX);
+                    int outputY = (int)(outputHeight / 2 - coordY);
+
+                    Vector2 normalized = new Vector2((coordX - centerCoordX) / size.X, (coordY - centerCoordY) / size.Y);
+
+                    if (normalized.Length() <= 0.5f)
                     {
                         if(outputX >= 0 && outputX <= outputBuffer.GetLength(0) - 1 &&
                            outputY >= 0 && outputY <= outputBuffer.GetLength(1) - 1)
