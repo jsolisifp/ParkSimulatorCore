@@ -8,7 +8,7 @@ namespace ParkSimulator
 
         public override void Init(Config config)
         {
-            BasePath = config.GetTextValue("storageBasePath", "Resources\\");
+            BasePath = config.GetTextValue("storageBasePath", "Storage\\");
 
             if(!Directory.Exists(BasePath)) { Directory.CreateDirectory(BasePath); }
 

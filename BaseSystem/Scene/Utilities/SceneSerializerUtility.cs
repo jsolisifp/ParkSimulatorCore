@@ -1,7 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using Microsoft.VisualBasic.FileIO;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Numerics;
+using System.Reflection;
+using System.Runtime.InteropServices.Marshalling;
 using System.Text;
 
 namespace ParkSimulator
@@ -10,6 +14,15 @@ namespace ParkSimulator
     {
         const string nullSerializedValue = "null";
 
+        enum TypeCategory
+        {
+            isNormal,
+            isEnum,
+            isResourcePointer,
+            isComponent,
+            isArray
+
+        };
         public static string Serialize(SimulatedScene scene)
         {
             StringBuilder builder = new();
@@ -72,85 +85,42 @@ namespace ParkSimulator
 
                         string serializedValue;
 
-                        if(field.type == "String")
+                        TypeCategory category;
+
+                        if (field.isEnum) { category = TypeCategory.isEnum; }
+                        else if (field.isComponent) { category = TypeCategory.isComponent; }
+                        else if (field.isResourcePointer) { category = TypeCategory.isResourcePointer; }
+                        else if (field.isArray) { category = TypeCategory.isArray; }
+                        else { category = TypeCategory.isNormal; }
+
+                        TypeCategory elementCategory;
+
+                        if(field.isArray)
                         {
-                            Debug.Assert(value != null);
-
-                            serializedValue = SerializeString((string)value);
-                        }
-                        else if (field.type == "Single")
-                        {
-                            Debug.Assert(value != null);
-
-                            serializedValue = SerializeSingle((Single)value);
-                        }
-                        else if (field.type == "Int32")
-                        {
-                            Debug.Assert(value != null);
-
-                            serializedValue = SerializeInt32((Int32)value);
-                        }
-                        else if(field.type == "Boolean")
-                        {
-                            Debug.Assert(value != null);
-
-                            serializedValue = SerializeBool((Boolean)value);
-                        }
-                        else if (field.type == "Vector2")
-                        {
-                            Debug.Assert(value != null);
-
-                            Vector2 v = (Vector2)value;
-                            serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y);
-                        }
-                        else if (field.type == "Vector3")
-                        {
-                            Debug.Assert(value != null);
-
-                            Vector3 v = (Vector3)value;
-                            serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z);
-                        }
-                        else if (field.type == "Vector4")
-                        {
-                            Debug.Assert(value != null);
-
-                            Vector4 v = (Vector4)value;
-                            serializedValue = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z) + "," + SerializeSingle(v.W);
-                        }
-                        else if (field.isEnum)
-                        {
-                            Debug.Assert(value != null);
-
-                            int index = (int)value;
-                            serializedValue = SerializeInt32(index);
-
-                        }
-                        else if (field.isResourcePointer)
-                        {
-                            Debug.Assert(value != null);
-
-                            ResourcePointer p = (ResourcePointer)value;
-
-                            if (p.ResourceId != null) { serializedValue = p.ResourceId + "," + p.TypeId; }
-                            else { serializedValue = nullSerializedValue; }
-                        }
-                        else if (field.isComponent)
-                        {
-                            if ((Component?)value != null)
+                            if(field.arrayElementIsEnum)
                             {
-                                int id = componentToId[(Component)value];
-                                serializedValue = SerializeInt32(id);
+                                elementCategory = TypeCategory.isEnum;
+                            }
+                            else if(field.arrayElementIsResourcePointer)
+                            {
+                                elementCategory = TypeCategory.isResourcePointer;
+                            }
+                            else if (field.arrayElementIsComponent)
+                            {
+                                elementCategory = TypeCategory.isComponent;
                             }
                             else
                             {
-                                serializedValue = nullSerializedValue;
+                                elementCategory = TypeCategory.isNormal;
                             }
                         }
                         else
                         {
-                            Debug.Assert(false, "Tipo de propiedad no reconocido");
-                            serializedValue = "";
+                            elementCategory = TypeCategory.isNormal;
                         }
+
+                        serializedValue = SerializeValue(field.type, category, field.arrayElementType,
+                                                            elementCategory, value, componentToId);
 
                         builder.AppendLine(tab + tab + tab + "Value:" + serializedValue);
 
@@ -164,11 +134,13 @@ namespace ParkSimulator
 
         }
 
-        struct ComponentReference
+        struct ComponentAssignOp
         {
             public Component targetComponent;
             public string targetFieldName;
-            public int referencedComponentId;
+            public bool targetFieldIsArray;
+            public int targetFieldArrayIndex;
+            public int componentIdToStore;
         }
 
         public static SimulatedScene Deserialize(string serialized)
@@ -178,7 +150,7 @@ namespace ParkSimulator
             int lineIndex = 0;
 
             Dictionary<int, Component> componentsById = new();
-            List<ComponentReference> createdComponentsReferences = new();
+            List<ComponentAssignOp> componentAssignOps = new();
 
             SimulatedScene scene = new();
 
@@ -224,8 +196,8 @@ namespace ParkSimulator
                     
                     if(FindComponentInfo(typeName, availableComponents) != null)
                     {   
-                        Component? createdComponent = SimulatedObject.CreateComponentByName(typeName);
-                        componentsById[id] = createdComponent;
+                        Component? newComponent = SimulatedObject.CreateComponentByName(typeName);
+                        componentsById[id] = newComponent;
 
                         for (int k = 0; k < numFields; k++)
                         {
@@ -238,7 +210,7 @@ namespace ParkSimulator
                             line = ReadLine(lines, ref lineIndex);
                             string serializedValue = line.Split(':')[1];
 
-                            var createdComponentFields = createdComponent?.GetFieldsInfo();
+                            var createdComponentFields = newComponent?.GetFieldsInfo();
 
                             Debug.Assert(createdComponentFields != null);
 
@@ -250,71 +222,31 @@ namespace ParkSimulator
                                 {
                                     Object? value = null;
 
-                                    if (fieldTypeName == "Single") { value = DeserializeSingle(serializedValue); }
-                                    else if (fieldTypeName == "Int32") { value = DeserializeInt32(serializedValue); }
-                                    else if (fieldTypeName == "Boolean") { value = DeserializeBool(serializedValue); }
-                                    else if (fieldTypeName == "Vector2")
-                                    {
-                                        string[] parts = serializedValue.Split(',');
-                                        value = new Vector2(DeserializeSingle(parts[0]),
-                                                            DeserializeSingle(parts[1]));
-                                    }
-                                    else if (fieldTypeName == "Vector3")
-                                    {   string[] parts = serializedValue.Split(',');
-                                        value = new Vector3(DeserializeSingle(parts[0]),
-                                                            DeserializeSingle(parts[1]),
-                                                            DeserializeSingle(parts[2]));
-                                    }
-                                    else if (fieldTypeName == "Vector4")
-                                    {   string[] parts = serializedValue.Split(',');
-                                        value = new Vector4(DeserializeSingle(parts[0]),
-                                                            DeserializeSingle(parts[1]),
-                                                            DeserializeSingle(parts[2]),
-                                                            DeserializeSingle(parts[3]));
-                                    }
-                                    else if (fieldTypeName == "String") { value = serializedValue; }
-                                    else if(fieldTypeName == "ResourcePointer")
-                                    { 
-                                        if(serializedValue != nullSerializedValue)
-                                        {
-                                            string[] parts = serializedValue.Split(',');
-                                            value = new ResourcePointer(parts[0], parts[1]);
-                                        }
-                                        else
-                                        {
-                                            value = new ResourcePointer();
-                                        }
-                                    }
-                                    else if(matchingField.Value.isEnum)
-                                    {
-                                        value = DeserializeInt32(serializedValue);
-                                    }
-                                    else if (matchingField.Value.isComponent)
-                                    {
-                                        if (serializedValue != nullSerializedValue)
-                                        {
-                                            int componentId = DeserializeInt32(serializedValue);
+                                    TypeCategory matchingFieldCategory;
+                                    if (matchingField.Value.isEnum) { matchingFieldCategory = TypeCategory.isEnum; }
+                                    else if (matchingField.Value.isComponent) { matchingFieldCategory = TypeCategory.isComponent; }
+                                    else if (matchingField.Value.isResourcePointer) { matchingFieldCategory = TypeCategory.isResourcePointer; }
+                                    else if (matchingField.Value.isArray) { matchingFieldCategory = TypeCategory.isArray; }
+                                    else { matchingFieldCategory = TypeCategory.isNormal; }
 
-                                            Debug.Assert(createdComponent != null);
+                                    TypeCategory matchingFieldElementCategory;
+                                    if (matchingField.Value.arrayElementIsEnum) { matchingFieldElementCategory = TypeCategory.isEnum; }
+                                    else if (matchingField.Value.arrayElementIsResourcePointer) { matchingFieldElementCategory = TypeCategory.isResourcePointer; }
+                                    else if (matchingField.Value.arrayElementIsComponent) { matchingFieldElementCategory = TypeCategory.isComponent; }
+                                    else { matchingFieldElementCategory = TypeCategory.isNormal; }
 
-                                            ComponentReference reference = new() { targetComponent = createdComponent,
-                                                targetFieldName = fieldName,
-                                                referencedComponentId = componentId };
 
-                                            createdComponentsReferences.Add(reference);
-                                        }
-                                        else
-                                        {
-                                            // nothing to do as null is already the default value for a component reference
-                                        }
+                                    Debug.Assert(newComponent != null, "Component not set" + typeName);
 
-                                    }
+                                    value = DeserializeValue(serializedValue, matchingField.Value.type, matchingFieldCategory,
+                                                            matchingField.Value.arrayElementType, matchingFieldElementCategory,
+                                                            newComponent, matchingField.Value.name, false, 0, componentAssignOps); 
 
                                     if (value != null)
                                     {
-                                        Debug.Assert(createdComponent != null);
+                                        Debug.Assert(newComponent != null);
 
-                                        createdComponent.SetFieldValue<object>(fieldName, value, false);
+                                        newComponent.SetFieldValue<object>(fieldName, value, false);
                                     }
 
                                 }
@@ -322,9 +254,9 @@ namespace ParkSimulator
 
                         }
 
-                        Debug.Assert(createdComponent != null);
+                        Debug.Assert(newComponent != null);
 
-                        simObject.AddComponent(createdComponent);
+                        simObject.AddComponent(newComponent);
 
 
                     }
@@ -340,12 +272,20 @@ namespace ParkSimulator
 
             }
 
-            // Second pass sets the references using the list
+            // Second pass assigns components processing the assigns ops
 
-            for(int i = 0; i < createdComponentsReferences.Count; i++)
+            for(int i = 0; i < componentAssignOps.Count; i++)
             {
-                ComponentReference reference = createdComponentsReferences[i];
-                reference.targetComponent.SetFieldValue<object>(reference.targetFieldName, componentsById[reference.referencedComponentId], false);
+                ComponentAssignOp op = componentAssignOps[i];
+
+                if(!op.targetFieldIsArray)
+                {
+                    op.targetComponent.SetFieldValue<object>(op.targetFieldName, componentsById[op.componentIdToStore], false);
+                }
+                else
+                {
+                    op.targetComponent.SetFieldArrayValue<object>(op.targetFieldName, op.targetFieldArrayIndex, componentsById[op.componentIdToStore], false);
+                }
             }
 
             return scene;
@@ -385,6 +325,126 @@ namespace ParkSimulator
             return l;
         }
 
+        static string SerializeValue(string type, TypeCategory category, string? arrayElementType,
+                                     TypeCategory? arrayElementCategory, object? value, Dictionary<Component, int> componentToId)
+        {
+            string r;
+            
+            if (type == "String")
+            {
+                Debug.Assert(value != null);
+
+                r = SerializeString((string)value);
+            }
+            else if (type == "Single")
+            {
+                Debug.Assert(value != null);
+
+                r = SerializeSingle((Single)value);
+            }
+            else if (type == "Int32")
+            {
+                Debug.Assert(value != null);
+
+                r = SerializeInt32((Int32)value);
+            }
+            else if (type == "Boolean")
+            {
+                Debug.Assert(value != null);
+
+                r = SerializeBool((Boolean)value);
+            }
+            else if (type == "Vector2")
+            {
+                Debug.Assert(value != null);
+
+                Vector2 v = (Vector2)value;
+                r = SerializeSingle(v.X) + "," + SerializeSingle(v.Y);
+            }
+            else if (type == "Vector3")
+            {
+                Debug.Assert(value != null);
+
+                Vector3 v = (Vector3)value;
+                r = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z);
+            }
+            else if (type == "Vector4")
+            {
+                Debug.Assert(value != null);
+
+                Vector4 v = (Vector4)value;
+                r = SerializeSingle(v.X) + "," + SerializeSingle(v.Y) + "," + SerializeSingle(v.Z) + "," + SerializeSingle(v.W);
+            }
+            else if (category == TypeCategory.isEnum)
+            {
+                Debug.Assert(value != null);
+
+                int index = (int)value;
+                r = SerializeInt32(index);
+
+            }
+            else if (category == TypeCategory.isArray)
+            {
+                Debug.Assert(arrayElementType != null);
+
+                int length;
+
+                r = "[";
+
+                Array? arrayValue = (Array?)value;
+
+                if (arrayValue == null) { length = 0; }
+                else
+                {
+                    length = arrayValue.Length;
+                }
+
+                if (arrayValue != null)
+                {
+                    for (int i = 0; i < length; i++)
+                    {
+                        Debug.Assert(arrayElementCategory != null, "Array element category");
+                        r += SerializeValue(arrayElementType, arrayElementCategory.Value, null, null , arrayValue.GetValue(i), componentToId);
+
+                        r += (i < length - 1 ? "|" : "");
+                    }
+
+                }
+
+                r += "]";
+
+            }
+            else if (category == TypeCategory.isResourcePointer)
+            {
+                Debug.Assert(value != null);
+
+                ResourcePointer p = (ResourcePointer)value;
+
+                if (p.ResourceId != null) { r = p.ResourceId + "," + p.TypeId; }
+                else { r = nullSerializedValue; }
+            }
+            else if (category == TypeCategory.isComponent)
+            {
+                if ((Component?)value != null)
+                {
+                    int id = componentToId[(Component)value];
+                    r = SerializeInt32(id);
+                }
+                else
+                {
+                    r = nullSerializedValue;
+                }
+            }
+            else
+            {
+                Debug.Assert(false, "No se reconoce el tipo a serializar");
+                r = "";
+            }
+
+            return r;
+
+        }
+
         static string SerializeString(string s)
         {
             // easy
@@ -405,6 +465,113 @@ namespace ParkSimulator
         {
             return f.ToString(CultureInfo.InvariantCulture);
         }
+
+        static object? DeserializeValue(string serializedValue, string fieldType, TypeCategory fieldCategory,
+                                        string? elementType, TypeCategory? elementCategory,
+                                        Component assignOpTargetComponent, string assignOpTargetField, bool assignOpTargetFieldIsArray, int assignOpTargetArrayIndex,
+                                        List<ComponentAssignOp> componentAssignOps)
+        {
+            object? r = null;
+
+            if (fieldType == "Single") { r = DeserializeSingle(serializedValue); }
+            else if (fieldType == "Int32") { r = DeserializeInt32(serializedValue); }
+            else if (fieldType == "Boolean") { r = DeserializeBool(serializedValue); }
+            else if (fieldType == "Vector2")
+            {
+                string[] parts = serializedValue.Split(',');
+                r = new Vector2(DeserializeSingle(parts[0]),
+                                    DeserializeSingle(parts[1]));
+            }
+            else if (fieldType == "Vector3")
+            {
+                string[] parts = serializedValue.Split(',');
+                r = new Vector3(DeserializeSingle(parts[0]),
+                                    DeserializeSingle(parts[1]),
+                                    DeserializeSingle(parts[2]));
+            }
+            else if (fieldType == "Vector4")
+            {
+                string[] parts = serializedValue.Split(',');
+                r = new Vector4(DeserializeSingle(parts[0]),
+                                    DeserializeSingle(parts[1]),
+                                    DeserializeSingle(parts[2]),
+                                    DeserializeSingle(parts[3]));
+            }
+            else if (fieldType == "String") { r = serializedValue; }
+            else if (fieldCategory == TypeCategory.isResourcePointer)
+            {
+                if (serializedValue != nullSerializedValue)
+                {
+                    string[] parts = serializedValue.Split(',');
+                    r = new ResourcePointer(parts[0], parts[1]);
+                }
+                else
+                {
+                    r = new ResourcePointer();
+                }
+            }
+            else if (fieldCategory == TypeCategory.isEnum)
+            {
+                Type? enumType = FindTypeByName(fieldType);
+
+                Debug.Assert(enumType != null, "Enum not found");
+
+                r = Enum.ToObject(enumType, DeserializeInt32(serializedValue));
+            }
+            else if(fieldCategory == TypeCategory.isArray)
+            {
+                string bracketsRemoved = serializedValue.Substring(1, serializedValue.Length - 2);
+                string[] parts = bracketsRemoved.Split('|', StringSplitOptions.RemoveEmptyEntries);
+
+                Debug.Assert(elementType != null && elementCategory != null);
+
+                Type? _elementType = FindTypeByName(elementType);
+
+                Debug.Assert(_elementType != null);
+
+                Array a = Array.CreateInstance(_elementType, parts.Length);
+
+                for(int i = 0; i < parts.Length; i++)
+                {
+                    object? v = DeserializeValue(parts[i], elementType, elementCategory.Value, null, null,
+                                            assignOpTargetComponent, assignOpTargetField, true, i, componentAssignOps);
+
+                    a.SetValue(v, i); 
+                }
+
+                r = a;
+
+            }
+            else if (fieldCategory == TypeCategory.isComponent)
+            {
+                if (serializedValue != nullSerializedValue)
+                {
+                    int componentId = DeserializeInt32(serializedValue);
+
+                    Debug.Assert(assignOpTargetComponent != null);
+
+                    ComponentAssignOp reference = new()
+                    {
+                        targetComponent = assignOpTargetComponent,
+                        targetFieldName = assignOpTargetField,
+                        targetFieldIsArray = assignOpTargetFieldIsArray,
+                        targetFieldArrayIndex = assignOpTargetArrayIndex,
+                        componentIdToStore = componentId
+                    };
+
+                    componentAssignOps.Add(reference);
+                }
+                else
+                {
+                    // nothing to do as null is already the default value for a component reference
+                }
+
+            }
+
+            return r;
+
+        }
+
         static string DeserializeString(string s)
         {
             // easy
@@ -424,6 +591,40 @@ namespace ParkSimulator
         static int DeserializeInt32(string s)
         {
             return Int32.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+
+        static Type? FindTypeByName(string typeName)
+        {
+            Type? type = null;
+
+            type = Type.GetType("System." + typeName, false);
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+            int k = 0;
+            while (k < assemblies.Length && type == null)
+            {
+                Assembly? a = assemblies[k];
+
+                Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                Type[] types = a.GetTypes();
+
+                int i = 0;
+                while (i < types.Length && type == null)
+                {
+                    Type t = types[i];
+                    if (t.Name == typeName) { type = t; }
+                    else { i++; }
+                }
+
+                if (type == null) { k++; }
+
+            }
+
+            return type;
+
         }
 
     }

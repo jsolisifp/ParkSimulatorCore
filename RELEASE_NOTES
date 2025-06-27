@@ -5,10 +5,10 @@ Known limitations
 - Resource files cannot be placed at subfolders
 
 - Custom components should inherit directly from Component class,
-  as multiple levels of inheritance are not supported currently.
+  as multiple levels of inheritance are not supported.
 - Using the default Storage subsystem, saving a scene and then
   changing the type of a component's field could lead to errors.
   
-  
+- Custom struct types are not supported in components' fields.
 
 

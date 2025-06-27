@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic.FileIO;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
@@ -244,8 +245,21 @@ namespace ParkSimulator
                                 ComponentFieldInfo? field = AskComponentField(targetComponent, "Field");
 
                                 if(field.HasValue)
-                                {   object? value = AskFieldValue(field.Value, "Value");
-                                    targetComponent.SetFieldValue<object>(field.Value.name, value);
+                                {
+                                    object? value;
+                                    
+                                    if(!field.Value.isArray)
+                                    {
+                                        value = AskFieldValue(targetComponent, field.Value, "Value");
+                                        targetComponent.SetFieldValue<object>(field.Value.name, value);
+                                    }
+                                    else
+                                    {
+                                        int index;
+                                        AskFieldArrayValue(targetComponent, field.Value, "Value", out value, out index);
+                                        targetComponent.SetFieldArrayValue<object>(field.Value.name, index, value);
+                                    }
+
                                 }
                             }
                         }
@@ -301,11 +315,11 @@ namespace ParkSimulator
 
         }
 
-        static int AskEnum(string typeName, string message)
+        static object? AskEnum(string typeName, string message)
         {
             Debug.Assert(Simulation.Scene != null, "Scene not assigned");
 
-            int r = 0;
+            object? r = null;
             bool done = false;
             int index = -1;
 
@@ -324,7 +338,7 @@ namespace ParkSimulator
                     if (index >= 1 && index <= enumInfo.names.Count)
                     {
                         done = true;
-                        r = index - 1;
+                        r = enumInfo.values[index - 1];
                     }
                     else { Console.WriteLine("Please enter a numeric index between " + 1 + " and " + enumInfo.names.Count + " (both included)"); }
                 }
@@ -489,7 +503,60 @@ namespace ParkSimulator
 
         }
 
-        static object? AskFieldValue(ComponentFieldInfo field, string message)
+        static void AskFieldArrayValue(Component component, ComponentFieldInfo field, string message, out object? value, out int index)
+        {
+            Debug.Assert(field.arrayElementType != null);
+
+            value = null;
+
+            int length = component.GetFieldArrayLength(field.name);
+
+            for (int i = 0; i < length; i++)
+            {
+                Console.WriteLine("[" + i + "]:" + FormatFieldArrayValue(component, field, i));
+            }
+
+            index = AskInt(message + " index", 0, length - 1, 0);
+
+            if (field.arrayElementType == "Vector2")
+            {
+                float x = AskSingle(message + " X");
+                float y = AskSingle(message + " Y");
+
+                value = (object?)(new Vector2(x, y));
+            }
+            else if (field.arrayElementType == "Vector3")
+            {
+                float x = AskSingle(message + " X");
+                float y = AskSingle(message + " Y");
+                float z = AskSingle(message + " Z");
+
+                value = (object?)(new Vector3(x, y, z));
+            }
+            else if (field.arrayElementType == "Vector4")
+            {
+                float x = AskSingle(message + " X");
+                float y = AskSingle(message + " Y");
+                float z = AskSingle(message + " Z");
+                float w = AskSingle(message + " W");
+
+                value = (object?)(new Vector4(x, y, z, w));
+            }
+            else if (field.arrayElementType == "Boolean") { value = (object?)AskBool(message); }
+            else if (field.arrayElementType == "Int32") { value = (object?)AskInt(message); }
+            else if (field.arrayElementType == "Single") { value = (object?)AskSingle(message); }
+            else if (field.arrayElementIsEnum) { value = (object?)AskEnum(field.arrayElementType, message); }
+            else if (field.arrayElementIsResourcePointer) { value = (object?)AskResource(message); }
+            else if (field.arrayElementIsComponent)
+            {
+                SimulatedObject? simObject = AskObject(message + " referenced object", true);
+                if (simObject != null)
+                { value = AskObjectComponent(simObject, message + " referenced component"); }
+            }
+            
+        }
+
+        static object? AskFieldValue(Component component, ComponentFieldInfo field, string message)
         {
             object? r = null;
 
@@ -532,7 +599,6 @@ namespace ParkSimulator
             return r;
 
         }
-
 
         static Component? AskObjectComponent(SimulatedObject simObject, string message)
         {
@@ -823,6 +889,69 @@ namespace ParkSimulator
                 
         }
 
+        static string FormatFieldArrayValue(Component c, ComponentFieldInfo f, int index)
+        {
+            string value = "*Cannot display*";
+
+            if(f.arrayElementType == "Vector2")
+            {
+                Vector2? v = c.GetFieldArrayValue<Vector2>(f.name, index);
+                if (v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + "]"; }
+            }
+            else if (f.arrayElementType == "Vector3")
+            {
+                Vector3? v = c.GetFieldArrayValue<Vector3>(f.name, index);
+                if (v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + ", " + v.Value.Z + "]"; }
+            }
+            else if (f.arrayElementType == "Vector4")
+            {
+                Vector4? v = c.GetFieldArrayValue<Vector4>(f.name, index);
+                if (v.HasValue) { value = "[" + v.Value.X + ", " + v.Value.Y + ", " + v.Value.Z + ", " + v.Value.W + "]"; }
+            }
+            else if (f.arrayElementType == "Boolean")
+            {
+                bool? v = c.GetFieldArrayValue<bool>(f.name, index);
+                if (v.HasValue) { value = v.Value.ToString(); }
+            }
+            else if (f.arrayElementType == "Int32")
+            {
+                int? v = c.GetFieldArrayValue<int>(f.name, index);
+                if (v.HasValue) { value = v.Value.ToString(); }
+            }
+            else if (f.arrayElementType == "Single")
+            {
+                float? v = c.GetFieldArrayValue<float>(f.name, index);
+                if (v.HasValue) { value = v.Value.ToString(); }
+            }
+            else if (f.arrayElementIsResourcePointer)
+            {
+                ResourcePointer v = c.GetFieldArrayValue<ResourcePointer>(f.name, index);
+                if (v.ResourceId != null) { value = "[" + v.ResourceId + "]"; }
+                else { value = "[none]"; }
+            }
+            else if (f.arrayElementIsEnum)
+            {
+                int? v = c.GetFieldArrayValue<int>(f.name, index);
+                if (v != null)
+                {
+                    value = Component.GetEnumInfo(f.arrayElementType).names[v.Value];
+                }
+            }
+            else if (f.arrayElementIsComponent)
+            {
+                Component? v = c.GetFieldArrayValue<Component>(f.name, index);
+                if (v != null)
+                {
+                    SimulatedObject? so = v.GetSimulatedObject();
+                    Debug.Assert(so != null, "Component not attached to simulated object");
+                    value = "[" + so.Name + "]";
+                }
+                else { value = "[none]"; }
+            }
+
+            return value;
+        }
+
         static string FormatFieldValue(Component c, ComponentFieldInfo f)
         {
             string value = "*Cannot display*";
@@ -875,6 +1004,20 @@ namespace ParkSimulator
                     value = "[" + so.Name + "]";
                 }
                 else { value = "[none]"; }
+            }
+            else if(f.isArray)
+            {
+                int length = c.GetFieldArrayLength(f.name);
+
+                value = "[";
+
+                for(int i = 0; i < length; i++)
+                {
+                    value += FormatFieldArrayValue(c, f, i);
+                    if (i < length - 1) { value += ","; }
+                }
+
+                value += "]";
             }
 
             return value;

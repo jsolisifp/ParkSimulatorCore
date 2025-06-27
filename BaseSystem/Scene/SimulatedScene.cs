@@ -43,6 +43,14 @@ namespace ParkSimulator
             if(State == SimulatedSceneState.linked) { UnlinkObjectResources(so); }
             else if(State == SimulatedSceneState.playing) { so.Stop(); UnlinkObjectResources(so); }
 
+
+            var components = so.GetComponents();
+
+            for(int i = 0; i < components.Count; i++)
+            {
+                OnComponentRemoved(components[i]);
+            }
+
             so.componentRemovedEvent -= OnComponentRemoved;
             so.DetachFromScene();
             objects.Remove(so);
@@ -152,6 +160,25 @@ namespace ParkSimulator
 
                     c.SetFieldValue<ResourcePointer>(f.name, p, false);
                 }
+                else if(f.isArray && f.arrayElementIsResourcePointer)
+                {
+                    int length = c.GetFieldArrayLength(f.name);
+
+                    for(int m = 0; m < length; m++)
+                    {
+                        ResourcePointer p = c.GetFieldArrayValue<ResourcePointer>(f.name, m);
+
+                        if (p.ResourceId != null && p.TypeId != null)
+                        {
+                            if (!Simulation.Storage.ExistsResource(p.ResourceId, p.TypeId)) { p = new ResourcePointer(); }
+                        }
+
+                        p.LinkResource();
+
+                        c.SetFieldArrayValue<ResourcePointer>(f.name, m, p, false);
+
+                    }
+                }
             }
         }
 
@@ -172,6 +199,7 @@ namespace ParkSimulator
             for(int k = 0; k < fields.Count; k++)
             {
                 ComponentFieldInfo f = fields[k];
+
                 if(f.type == typeof(ResourcePointer).Name)
                 {
                     ResourcePointer p = c.GetFieldValue<ResourcePointer>(f.name);
@@ -180,6 +208,20 @@ namespace ParkSimulator
 
                     c.SetFieldValue<ResourcePointer>(f.name, p, false);
                 }
+                else if(f.isArray && f.arrayElementIsResourcePointer)
+                {
+                    int length = c.GetFieldArrayLength(f.name);
+
+                    for (int m = 0; m < length; m++)
+                    {
+                        ResourcePointer p = c.GetFieldArrayValue<ResourcePointer>(f.name, m);
+
+                        p.UnlinkResource();
+
+                        c.SetFieldArrayValue<ResourcePointer>(f.name, m, p, false);
+                    }
+                }
+
             }
         }
 
@@ -191,23 +233,37 @@ namespace ParkSimulator
             {
                 var components = objects[i].GetComponents();
 
-                for(int j = 0; j < components.Count; j++)
+                for (int j = 0; j < components.Count; j++)
                 {
                     var fields = components[j].GetFieldsInfo();
 
-                    for(int k = 0; k < fields.Count; k++)
+                    for (int k = 0; k < fields.Count; k++)
                     {
-                        if(fields[k].isComponent)
+                        if (fields[k].isComponent)
                         {
                             Component? value = components[j].GetFieldValue<Component>(fields[k].name);
 
-                            if(c == value)
+                            if (c == value)
                             {
                                 components[j].SetFieldValue<Component>(fields[k].name, null);
                             }
                         }
-                    }
+                        else if (fields[k].isArray && fields[k].arrayElementIsComponent)
+                        {
+                            int length = components[j].GetFieldArrayLength(fields[k].name);
 
+                            for (int m = 0; m < length; m++)
+                            {
+                                Component? value = components[j].GetFieldArrayValue<Component>(fields[k].name, m);
+
+                                if (c == value)
+                                {
+                                    components[j].SetFieldArrayValue<Component>(fields[k].name, m, null);
+                                }
+                            }
+                        }
+
+                    }
                 }
             }
 
@@ -249,6 +305,34 @@ namespace ParkSimulator
 
                                 }
                             }
+                        }
+                        else if(fields[k].isArray && fields[k].arrayElementIsResourcePointer)
+                        {
+                            int length = components[j].GetFieldArrayLength(fields[k].name);
+
+                            for(int m = 0; m < length; m++)
+                            {
+                                ResourcePointer? p = components[j].GetFieldArrayValue<ResourcePointer>(fields[k].name, m);
+
+                                if (p.HasValue)
+                                {
+                                    if (p.Value.ResourceId == resourceId && p.Value.TypeId == typeId)
+                                    {
+                                        if (State == SimulatedSceneState.linked)
+                                        {
+                                            p.Value.UnlinkResource();
+                                            // Simulation.Storage.RemoveReference(resourceId, typeId);
+                                        }
+
+                                        ResourcePointer nullPointer = new ResourcePointer();
+                                        components[j].SetFieldArrayValue<ResourcePointer>(fields[k].name, m, nullPointer, false);
+
+                                    }
+                                }
+
+                            }
+
+
                         }
                     }
 

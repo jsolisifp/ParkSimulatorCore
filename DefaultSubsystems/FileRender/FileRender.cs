@@ -39,7 +39,7 @@ namespace ParkSimulator
         {
             outputWidth = config.GetIntValue("renderOuputWidth", 320);
             outputHeight = config.GetIntValue("renderOutputHeight", 200);
-            outputPath = config.GetTextValue("renderOutputPath", "Output\\");
+            outputPath = config.GetTextValue("renderOutputPath", "Render\\");
 
             clearColor.r = (byte)config.GetIntValue("renderClearColorR", 120);
             clearColor.g = (byte)config.GetIntValue("renderClearColorG", 255);

@@ -108,6 +108,10 @@ namespace ParkSimulator
             attractionComponentC.Neighbour = attractionComponentD;
             attractionComponentD.Neighbour = attractionComponentA;
 
+            attractionComponentA.Neighbours = new TestAttraction[] { attractionComponentB, attractionComponentC };
+            attractionComponentB.Neighbours = new TestAttraction[] { attractionComponentA, attractionComponentC };
+            attractionComponentC.Neighbours = new TestAttraction[] { attractionComponentB, attractionComponentA };
+            attractionComponentD.Neighbours = new TestAttraction[] { attractionComponentA, attractionComponentB };
 
         }
     }

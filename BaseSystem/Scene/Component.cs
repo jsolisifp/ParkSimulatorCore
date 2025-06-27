@@ -12,12 +12,18 @@ namespace ParkSimulator
         public bool isEnum;
         public bool isResourcePointer;
         public bool isComponent;
+        public bool isArray;
+        public string? arrayElementType;
+        public bool arrayElementIsComponent;
+        public bool arrayElementIsEnum;
+        public bool arrayElementIsResourcePointer;
         public bool isWritable;
     };
 
     public struct ComponentEnumInfo
     {
         public ReadOnlyCollection<string> names;
+        public ReadOnlyCollection<object> values;
     };
 
     public abstract class Component
@@ -77,6 +83,20 @@ namespace ParkSimulator
             Debug.Assert(type != null, "Enumerated type " + typeName + " not found");
 
             r.names = Enum.GetNames(type).AsReadOnly<string>();
+
+
+            Array valuesArray = Enum.GetValues(type);
+
+            object[] values = new object[valuesArray.Length];
+            for(int i = 0; i < valuesArray.Length; i++)
+            {
+                object? v = valuesArray.GetValue(i);
+                Debug.Assert(v != null);
+                values[i] = v;
+            }
+
+            r.values = values.AsReadOnly<object>();
+
             return r;
 
         }
@@ -95,6 +115,18 @@ namespace ParkSimulator
                 f.isResourcePointer = (p.PropertyType.Name == typeof(ResourcePointer).Name);
                 f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
                 f.isWritable = p.CanWrite;
+                f.isArray = p.PropertyType.IsArray;
+
+                Type? elementType = p.PropertyType.GetElementType();
+
+                if(elementType != null)
+                {
+                    f.arrayElementType = elementType.Name;
+                    f.arrayElementIsEnum = elementType.IsEnum;
+                    f.arrayElementIsComponent = elementType.IsSubclassOf(typeof(Component));
+                    f.arrayElementIsResourcePointer = (elementType.Name == "ResourcePointer");
+                }
+
                 fields.Add(f);
             }
 
@@ -106,7 +138,52 @@ namespace ParkSimulator
             return (T?)propertiesByName[name].GetValue(this);
         }
 
+        public int GetFieldArrayLength(string name)
+        {
+            Array? array = (Array?)propertiesByName[name].GetValue(this);
+            Debug.Assert(array != null, "Field is not an array");
+            return array.Length;
+        }
+
+        public T? GetFieldArrayValue<T>(string name, int index)
+        {
+            Array? array = (Array)propertiesByName[name].GetValue(this);
+            return (T?)array.GetValue(index);
+        }
+
         public void SetFieldValue<T>(string name, T? value, bool manageResourceLinking = true)
+        {            
+            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+            if (simScene != null && manageResourceLinking)
+            {
+                if (simScene.State != SimulatedSceneState.unlinked)
+                {
+                    if (value != null && value.GetType().Name == "ResourcePointer")
+                    {
+                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        p.UnlinkResource();
+                    }
+                }
+            }
+
+            propertiesByName[name].SetValue(this, value);
+
+            if (simScene != null && manageResourceLinking)
+            {
+                if (simScene.State != SimulatedSceneState.unlinked)
+                {
+                    if (value != null && value.GetType().Name == "ResourcePointer")
+                    {
+                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        p.LinkResource();
+                    }
+                }
+            }
+        }
+
+
+        public void SetFieldArrayValue<T>(string name, int index, T? value, bool manageResourceLinking = true)
         {
             SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
 
@@ -114,23 +191,29 @@ namespace ParkSimulator
             {
                 if(simScene.State != SimulatedSceneState.unlinked)
                 {
-                    if(typeof(T).Name == "ResourcePointer")
+                    if(value != null && value.GetType().Name == "ResourcePointer")
                     {
-                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
                         p.UnlinkResource();                                        
                     }
                 }
             }
 
-            propertiesByName[name].SetValue(this, value);
+            Array? a = (Array?)propertiesByName[name].GetValue(this);
+
+            Debug.Assert(a != null);
+            
+            a.SetValue(value, index);
+
+            propertiesByName[name].SetValue(this, a);
 
             if(simScene != null && manageResourceLinking)
             {
                 if(simScene.State != SimulatedSceneState.unlinked)
                 {
-                    if(typeof(T).Name == "ResourcePointer")
+                    if(value != null && value.GetType().Name == "ResourcePointer")
                     {
-                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                        ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
                         p.LinkResource();                                        
                     }
                 }
