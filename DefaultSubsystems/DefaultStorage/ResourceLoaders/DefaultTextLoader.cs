@@ -2,11 +2,11 @@
 
 namespace ParkSimulator
 {
-    public class FileTextLoader : ResourceLoader
+    public class DefaultTextLoader : ResourceLoader
     {
-        FileStorage storage;
+        DefaultStorage storage;
 
-        public FileTextLoader(FileStorage _storage)
+        public DefaultTextLoader(DefaultStorage _storage)
         {
             storage = _storage;
         }

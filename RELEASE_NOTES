@@ -11,4 +11,6 @@ Known limitations
   
 - Custom struct types are not supported in components' fields.
 
+- Arrays cannot contain arrays.
+
 

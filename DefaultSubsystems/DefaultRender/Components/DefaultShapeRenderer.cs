@@ -14,27 +14,27 @@ namespace ParkSimulator
         disc
     }
 
-    class FileShapeRenderer : Component
+    class DefaultShapeRenderer : Component
     {
         public FileShapeType Type { get; set; }
         public Vector2 Position { get; set; }
         public Vector2 Size { get; set; } = new Vector2(10, 10);
         public Vector3 Color { get; set; } = new Vector3(1, 1, 1);
 
-        FileRender? render;
+        DefaultRender? render;
         override public void Pass(int id)
         {
-            render ??= (FileRender?)Simulation.Render;
+            render ??= (DefaultRender?)Simulation.Render;
 
             Debug.Assert(render != null, "No compatible render subsystem found");
 
             if(Type == FileShapeType.rect)
             {
-                render.DrawRect(Position - Size / 2, Size, new FileRender.Color24(Color));
+                render.DrawRect(Position - Size / 2, Size, new DefaultRender.Color24(Color));
             }
             else
             {
-                render.DrawEllipse(Position - Size / 2, Size, new FileRender.Color24(Color));
+                render.DrawEllipse(Position - Size / 2, Size, new DefaultRender.Color24(Color));
             }
         }
     }

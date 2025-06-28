@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public class FileRender : Render
+    public class DefaultRender : Render
     {
         int outputWidth;
         int outputHeight;
@@ -29,7 +29,7 @@ namespace ParkSimulator
 
         int frameNumber = 0;
 
-        public FileRender()
+        public DefaultRender()
         {
             outputPath = "";
             clearColor = new Color24();

@@ -1,6 +1,6 @@
 ﻿namespace ParkSimulator
 {
-    public class MemoryConfig : Config
+    public class DefaultConfig : Config
     {
         struct Value
         {
@@ -11,7 +11,7 @@
 
         Dictionary<string, Value> valuesById;
 
-        public MemoryConfig()
+        public DefaultConfig()
         {
             valuesById = new Dictionary<string, Value>();
         }

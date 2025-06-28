@@ -2,7 +2,7 @@
 
 namespace ParkSimulator
 {
-    public class FileStorage : Storage
+    public class DefaultStorage : Storage
     {
         public string BasePath { get; set; } = "";
 
@@ -12,8 +12,8 @@ namespace ParkSimulator
 
             if(!Directory.Exists(BasePath)) { Directory.CreateDirectory(BasePath); }
 
-            loaders.Add(typeIdScene, new FileSceneLoader(this));
-            loaders.Add(typeIdText, new FileTextLoader(this));
+            loaders.Add(typeIdScene, new DefaultSceneLoader(this));
+            loaders.Add(typeIdText, new DefaultTextLoader(this));
         }
 
         public override void Finish()

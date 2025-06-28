@@ -221,6 +221,66 @@ namespace ParkSimulator
 
         }
 
+        public void AddFieldArrayElements(string name, int index, int count)
+        {
+            Array? a = (Array?)propertiesByName[name].GetValue(this);
+
+            Debug.Assert(a != null, "Property is not an array");
+
+            Type? elementType = propertiesByName[name].PropertyType.GetElementType();
+
+            Debug.Assert(elementType != null, "Cannot get element type");
+
+            Array newA = Array.CreateInstance(elementType, a.Length + count);
+
+            for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
+
+            for(int i = index + count; i < a.Length + count; i++)  { newA.SetValue(a.GetValue(i - count), i); }
+
+            propertiesByName[name].SetValue(this, newA);
+            
+
+        }
+
+        public void RemoveFieldArrayElements(string name, int index, int count, bool manageResourceLinking = true)
+        {
+            Array? a = (Array?)propertiesByName[name].GetValue(this);
+
+            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+            if(simScene != null && manageResourceLinking)
+            {
+                if(simScene.State != SimulatedSceneState.unlinked)
+                {
+                    for(int i = index; i < index + count; i++)
+                    {
+                        object? value = a.GetValue(i);
+
+                        if(value != null && value.GetType().Name == "ResourcePointer")
+                        {
+                            ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, i);
+                            p.UnlinkResource();                                        
+                        }
+
+                    }
+                }
+            }
+
+            Debug.Assert(a != null, "Property is not an array");
+
+            Type? elementType = propertiesByName[name].PropertyType.GetElementType();
+
+            Debug.Assert(elementType != null, "Cannot get element type");
+
+            Array newA = Array.CreateInstance(elementType, a.Length - count);
+
+            for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
+
+            for(int i = index + count; i < a.Length; i++)  { newA.SetValue(a.GetValue(i), i - count); }
+
+            propertiesByName[name].SetValue(this, newA);
+        }
+
         public virtual void Start() { }
         public virtual void Step() { }
         public virtual void Pass(int passId) { }

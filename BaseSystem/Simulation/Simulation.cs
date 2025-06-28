@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace ParkSimulator
 {
@@ -17,7 +19,6 @@ namespace ParkSimulator
         public static Render? Render { get { return render; } }
         public static Log? Log { get { return log; } }
         public static Random? Random { get { return random; } } 
-
 
         static SimulationState state = SimulationState.uninitialized;
         static SimulatedScene? scene;
@@ -50,6 +51,18 @@ namespace ParkSimulator
             scene.LinkResources();
 
             playingTemporarySceneResourceId = null;
+        }
+
+        public static void GetVersion(out int major, out int minor, out int build, out int revision)
+        {
+            Version ?v = Assembly.GetAssembly(typeof(Simulation))?.GetName().Version;
+
+            Debug.Assert(v != null, "Cannot retrieve assembly version info");
+            major = v.Major;
+            minor = v.Minor;
+            build = v.Build;
+            revision = v.Revision;
+
         }
 
         public static void NewScene()

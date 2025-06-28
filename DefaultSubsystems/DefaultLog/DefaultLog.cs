@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ParkSimulator
 {
-    public class FileLog : Log
+    public class DefaultLog : Log
     {
         const string infoPrefix = "INFO";
         const string warningPrefix = "WARNING";
@@ -23,7 +23,7 @@ namespace ParkSimulator
         string fileName;
         StreamWriter? writer;
 
-        public FileLog()
+        public DefaultLog()
         {
             fileName = "";
         }

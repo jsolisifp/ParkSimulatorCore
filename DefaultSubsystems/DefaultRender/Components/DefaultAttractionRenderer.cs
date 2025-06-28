@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public class TestRenderer : Component
+    public class DefaultAttractionRenderer : Component
     {
         public Vector3 Color { get; set; }
         public float Size { get; set; } = 5;
@@ -11,10 +11,10 @@ namespace ParkSimulator
         public Vector3 PointColor { get; set; } = new Vector3(0.0f, 0.0f, 0.0f);
 
 
-        FileRender? render;
-        TestAttraction? location;
+        DefaultRender? render;
+        DefaultAttraction? location;
 
-        public TestRenderer()
+        public DefaultAttractionRenderer()
         {
             render = null;
         }
@@ -28,20 +28,20 @@ namespace ParkSimulator
             Debug.Assert(Simulation.Render != null, "La simulación no está iniciada");
             Debug.Assert(simulatedObject != null, "El componente no está añadido a un objeto");
 
-            render ??= (FileRender)Simulation.Render;
-            location ??= simulatedObject.GetComponent<TestAttraction>();
+            render ??= (DefaultRender)Simulation.Render;
+            location ??= simulatedObject.GetComponent<DefaultAttraction>();
 
             Debug.Assert(location != null, "Falta el componente location");
 
             float size = Size * location.Capacity;
             Vector2 p = new Vector2(location.Coordinates.X, location.Coordinates.Z) - Vector2.One * size / 2;
-            render.DrawRect(p, Vector2.One * size, new FileRender.Color24() { r = 127, g = 127, b = 127 });
+            render.DrawRect(p, Vector2.One * size, new DefaultRender.Color24() { r = 127, g = 127, b = 127 });
 
             size = Size * location.Occupation;
             p = new Vector2(location.Coordinates.X, location.Coordinates.Z) - Vector2.One * size / 2;
-            render.DrawRect(p, Vector2.One * size, new FileRender.Color24(Color));
+            render.DrawRect(p, Vector2.One * size, new DefaultRender.Color24(Color));
 
-            TestAttraction? neighbourLocation = location?.Neighbour?.GetSimulatedObject()?.GetComponent<TestAttraction>();
+            DefaultAttraction? neighbourLocation = location?.Neighbour?.GetSimulatedObject()?.GetComponent<DefaultAttraction>();
 
             if(neighbourLocation != null)
             {
@@ -49,14 +49,14 @@ namespace ParkSimulator
 
                 Vector2 p1 = new Vector2(location.Coordinates.X, location.Coordinates.Z);
                 Vector2 p2 = new Vector2(neighbourLocation.Coordinates.X, neighbourLocation.Coordinates.Z);
-                FileRender.Color24 color = new (Color);
+                DefaultRender.Color24 color = new (Color);
                 render.DrawLine(p1, p2, color);
             }
 
             Vector2 ellipseSize = Vector2.One * PointSize * 2;
             Vector2 ellipsePosition = new Vector2(location.Coordinates.X, location.Coordinates.Z) - ellipseSize / 2; 
 
-            render.DrawEllipse(ellipsePosition, ellipseSize, new FileRender.Color24(PointColor));
+            render.DrawEllipse(ellipsePosition, ellipseSize, new DefaultRender.Color24(PointColor));
         }
 
     }

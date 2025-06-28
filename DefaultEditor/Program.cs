@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualBasic.FileIO;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
@@ -53,8 +54,10 @@ namespace ParkSimulator
         const int MenuObjectOptionAddComponent = 3;
         const int MenuObjectOptionRemoveComponent = 4;
         const int MenuObjectOptionSetFieldValue = 5;
+        const int MenuObjectOptionAddArrayFieldElements = 6;
+        const int MenuObjectOptionRemoveArrayFieldElements = 7;
 
-        const int MenuObjectOptionsCount = 5;
+        const int MenuObjectOptionsCount = 8;
 
         const int MenuResourceOptionDelete = 1;
 
@@ -77,11 +80,11 @@ namespace ParkSimulator
         { 
             // Initialize simulator
 
-            Config config = new MemoryConfig();
+            Config config = new DefaultConfig();
 
-            Storage storage = new FileStorage();
-            Render rendering = new FileRender();
-            Log log = new FileLog();
+            Storage storage = new DefaultStorage();
+            Render rendering = new DefaultRender();
+            Log log = new DefaultLog();
 
             Simulation.Init(config, storage, rendering, log);
 
@@ -265,6 +268,49 @@ namespace ParkSimulator
                         }
 
                         menu = MenuId.main;
+                    }
+                    else if(option == MenuObjectOptionAddArrayFieldElements || option == MenuObjectOptionRemoveArrayFieldElements)
+                    {
+                        bool isAdd = (option == MenuObjectOptionAddArrayFieldElements);
+
+                        SimulatedObject? targetObject = AskObject("Object");
+
+                        if(targetObject != null)
+                        {
+                            Component? targetComponent = AskObjectComponent(targetObject, "Component");
+                            if(targetComponent != null)
+                            {
+                                ComponentFieldInfo? field = AskComponentField(targetComponent, "Field");
+
+                                if(field.HasValue)
+                                {
+                                    int length = targetComponent.GetFieldArrayLength(field.Value.name);
+
+                                    for (int i = 0; i < length; i++)
+                                                            {
+                                        Console.WriteLine("[" + i + "]:" + FormatFieldArrayValue(targetComponent, field.Value, i));
+                                    }
+
+                                    if(isAdd)
+                                    {
+                                        int index = AskInt("Where to add elements", 0, length);
+                                        int count = AskInt("Elements to add", 1);
+
+                                        targetComponent.AddFieldArrayElements(field.Value.name, index, count);
+                                    }
+                                    else
+                                    {
+                                        int index = AskInt("Where to remove elements", 0, length);
+                                        int count = AskInt("Elements to remove", 1);
+
+                                        targetComponent.RemoveFieldArrayElements(field.Value.name, index, count);
+                                    }
+
+
+                                }
+                            }
+                        }
+
                     }
                     else if (option == MenuOptionBackOrQuit) { menu = MenuId.main; }
                 }
@@ -724,11 +770,30 @@ namespace ParkSimulator
 
         static void ShowHeader()
         {
+            int minor;
+            int major; 
+            int build;
+            int revision;
+
+            Simulation.GetVersion(out major, out minor, out build, out revision);
+
+            string version = String.Format("core version {0}.{1}.{2}.{3}", major, minor, build, revision);
+
             Console.WriteLine(",*******************************************,");
             Console.WriteLine("|                                           |");
             Console.WriteLine("|          Park simulator console           |");
             Console.WriteLine("|                                           |");
+
+            string versionLine = "|                                           |";
+            int versionPosition = versionLine.Length / 2 - version.Length / 2;
+            versionLine = versionLine.Insert(versionLine.Length / 2 - version.Length / 2, version);
+            versionLine = versionLine.Remove(versionPosition + version.Length, version.Length);
+
+            Console.WriteLine(versionLine);
+            Console.WriteLine("|                                           |");
             Console.WriteLine("´*******************************************´");
+
+
         }
 
         static void ShowSimulationState()
@@ -810,6 +875,8 @@ namespace ParkSimulator
                 Console.WriteLine("  [3]Add component");
                 Console.WriteLine("  [4]Remove component");
                 Console.WriteLine("  [5]Set field value");
+                Console.WriteLine("  [6]Add array field elements");
+                Console.WriteLine("  [7]Remove array field elements");
                 Console.WriteLine("  [0]Back");
             }
             else if (menu == MenuId.resource)

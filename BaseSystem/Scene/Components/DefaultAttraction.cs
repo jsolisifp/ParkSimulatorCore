@@ -19,23 +19,23 @@ namespace ParkSimulator
         never
     };
 
-    public class TestAttraction : Component
+    public class DefaultAttraction : Component
     {
         public TestAttractionType Type { get; set; }
         public Vector3 Coordinates { get; set; }
         public int Capacity { get; set; } = 10;
         public int Occupation { get; set; } = 0;
-        public TestAttraction? Neighbour { get; set; }
+        public DefaultAttraction? Neighbour { get; set; }
         public ResourcePointer Description { get; set; }
         public int[] Valorations { get; set; } = new int[0];
         public TestAttractionMaintenanceType[] MaintenanceSchedule { get; set; } = new TestAttractionMaintenanceType[0];
-        public TestAttraction[] Neighbours { get; set; } = new TestAttraction[0];
+        public DefaultAttraction[] Neighbours { get; set; } = new DefaultAttraction[0];
 
         public ResourcePointer[] Descriptions { get; set; } = new ResourcePointer[0];
 
-        TestAttraction? neighbourLocation;
+        DefaultAttraction? neighbourLocation;
 
-        public TestAttraction()
+        public DefaultAttraction()
         {
             Coordinates = new Vector3(0, 0, 0);
             Neighbour = null;
@@ -55,7 +55,7 @@ namespace ParkSimulator
 
         public override void Start()
         {
-            neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<TestAttraction>();
+            neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<DefaultAttraction>();
         }
 
         public override void Step()

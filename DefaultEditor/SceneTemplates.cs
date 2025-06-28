@@ -13,19 +13,19 @@ namespace ParkSimulator
             SimulatedObject attractionB;
             SimulatedObject attractionC;
             SimulatedObject attractionD;
-            TestAttraction attractionComponentA;
-            TestAttraction attractionComponentB;
-            TestAttraction attractionComponentC;
-            TestAttraction attractionComponentD;
-            TestRenderer rendererComponentA;
-            TestRenderer rendererComponentB;
-            TestRenderer rendererComponentC;
-            TestRenderer rendererComponentD;
+            DefaultAttraction attractionComponentA;
+            DefaultAttraction attractionComponentB;
+            DefaultAttraction attractionComponentC;
+            DefaultAttraction attractionComponentD;
+            DefaultAttractionRenderer rendererComponentA;
+            DefaultAttractionRenderer rendererComponentB;
+            DefaultAttractionRenderer rendererComponentC;
+            DefaultAttractionRenderer rendererComponentD;
 
             attractionA = new SimulatedObject();
             attractionA.Name = "AttractionA";
 
-            attractionComponentA = new TestAttraction();
+            attractionComponentA = new DefaultAttraction();
             attractionComponentA.Type = TestAttractionType.rollercoaster;
             attractionComponentA.Coordinates = new Vector3(-40, 0, -30);
             attractionComponentA.Capacity = 10;
@@ -34,7 +34,7 @@ namespace ParkSimulator
 
             attractionA.AddComponent(attractionComponentA);
 
-            rendererComponentA = new TestRenderer();
+            rendererComponentA = new DefaultAttractionRenderer();
             rendererComponentA.Size = 5.0f;
             rendererComponentA.Color = new Vector3(0.5f, 0, 0);
 
@@ -45,7 +45,7 @@ namespace ParkSimulator
             attractionB = new SimulatedObject();
             attractionB.Name = "AttractionB";
 
-            attractionComponentB = new TestAttraction();
+            attractionComponentB = new DefaultAttraction();
             attractionComponentB.Type = TestAttractionType.bumperCars;
             attractionComponentB.Coordinates = new Vector3(80, 0, -80);
             attractionComponentB.Capacity = 5;
@@ -54,7 +54,7 @@ namespace ParkSimulator
 
             attractionB.AddComponent(attractionComponentB);
 
-            rendererComponentB = new TestRenderer();
+            rendererComponentB = new DefaultAttractionRenderer();
             rendererComponentB.Size = 5.0f;
             rendererComponentB.Color = new Vector3(0, 0.5f, 0);
 
@@ -65,7 +65,7 @@ namespace ParkSimulator
             attractionC = new SimulatedObject();
             attractionC.Name = "AttractionC";
 
-            attractionComponentC = new TestAttraction();
+            attractionComponentC = new DefaultAttraction();
             attractionComponentC.Type = TestAttractionType.carousel;
             attractionComponentC.Coordinates = new Vector3(20, 0, 40);
             attractionComponentC.Capacity = 3;
@@ -74,7 +74,7 @@ namespace ParkSimulator
 
             attractionC.AddComponent(attractionComponentC);
 
-            rendererComponentC = new TestRenderer();
+            rendererComponentC = new DefaultAttractionRenderer();
             rendererComponentC.Size = 5.0f;
             rendererComponentC.Color = new Vector3(0, 0, 0.5f);
 
@@ -86,7 +86,7 @@ namespace ParkSimulator
             attractionD = new SimulatedObject();
             attractionD.Name = "AttractionD";
 
-            attractionComponentD = new TestAttraction();
+            attractionComponentD = new DefaultAttraction();
             attractionComponentD.Type = TestAttractionType.ferrisWheel;
             attractionComponentD.Coordinates = new Vector3(-80, 0, 80);
             attractionComponentD.Capacity = 5;
@@ -95,7 +95,7 @@ namespace ParkSimulator
 
             attractionD.AddComponent(attractionComponentD);
 
-            rendererComponentD = new TestRenderer();
+            rendererComponentD = new DefaultAttractionRenderer();
             rendererComponentD.Size = 5.0f;
             rendererComponentD.Color = new Vector3(0.5f, 0.5f, 0);
 
@@ -108,10 +108,10 @@ namespace ParkSimulator
             attractionComponentC.Neighbour = attractionComponentD;
             attractionComponentD.Neighbour = attractionComponentA;
 
-            attractionComponentA.Neighbours = new TestAttraction[] { attractionComponentB, attractionComponentC };
-            attractionComponentB.Neighbours = new TestAttraction[] { attractionComponentA, attractionComponentC };
-            attractionComponentC.Neighbours = new TestAttraction[] { attractionComponentB, attractionComponentA };
-            attractionComponentD.Neighbours = new TestAttraction[] { attractionComponentA, attractionComponentB };
+            attractionComponentA.Neighbours = new DefaultAttraction[] { attractionComponentB, attractionComponentC };
+            attractionComponentB.Neighbours = new DefaultAttraction[] { attractionComponentA, attractionComponentC };
+            attractionComponentC.Neighbours = new DefaultAttraction[] { attractionComponentB, attractionComponentA };
+            attractionComponentD.Neighbours = new DefaultAttraction[] { attractionComponentA, attractionComponentB };
 
         }
     }
