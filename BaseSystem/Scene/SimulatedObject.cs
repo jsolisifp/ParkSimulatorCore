@@ -68,23 +68,23 @@ namespace ParkSimulator
             }
         }
 
-        public void Step()
+        public void Step(float deltaTime)
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when stepped");
 
             for (int i = 0; i < components.Count; i++)
             {
-                components[i].Step();
+                components[i].Step(deltaTime);
             }
         }
 
-        public void Pass(int passId)
+        public void Pass(int passId, object? parameters)
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when pass");
 
             for (int i = 0; i < components.Count; i++)
             {
-                components[i].Pass(passId);
+                components[i].Pass(passId, parameters);
             }
         }
 

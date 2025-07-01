@@ -29,7 +29,7 @@ namespace ParkSimulator
             File.WriteAllText(storage.BasePath + id + "." + Storage.typeIdScene, serialized);
         }
 
-        public override void Unload(string id)
+        public override void Unload(string id, object resource)
         {
             // Nothing to do
         }

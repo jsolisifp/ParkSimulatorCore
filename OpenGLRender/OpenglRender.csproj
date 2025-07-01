@@ -4,15 +4,23 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>ParkSimulator.$(AssemblyName)</PackageId>
-    <Title>Park Simulator Default</Title>
-	 <VersionPrefix>1.0.5</VersionPrefix>
+    <VersionPrefix>1.0.4</VersionPrefix>
 	  <PackageIcon>Icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Silk.NET.Assimp" Version="2.22.0" />
+    <PackageReference Include="Silk.NET.OpenGL" Version="2.22.0" />
+    <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BaseSystem\BaseSystem.csproj" />
+    <ProjectReference Include="..\DefaultSubsystems\DefaultSubsystems.csproj" />
   </ItemGroup>
 
   <ItemGroup>

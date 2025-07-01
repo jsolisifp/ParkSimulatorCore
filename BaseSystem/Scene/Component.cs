@@ -177,6 +177,7 @@ namespace ParkSimulator
                     {
                         ResourcePointer p = GetFieldValue<ResourcePointer>(name);
                         p.LinkResource();
+                        propertiesByName[name].SetValue(this, p);
                     }
                 }
             }
@@ -200,9 +201,7 @@ namespace ParkSimulator
             }
 
             Array? a = (Array?)propertiesByName[name].GetValue(this);
-
-            Debug.Assert(a != null);
-            
+            Debug.Assert(a != null);            
             a.SetValue(value, index);
 
             propertiesByName[name].SetValue(this, a);
@@ -215,6 +214,11 @@ namespace ParkSimulator
                     {
                         ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
                         p.LinkResource();                                        
+
+                        a = (Array?)propertiesByName[name].GetValue(this);
+                        Debug.Assert(a != null);            
+                        a.SetValue(p, index);
+                        propertiesByName[name].SetValue(this, a);
                     }
                 }
             }
@@ -282,8 +286,8 @@ namespace ParkSimulator
         }
 
         public virtual void Start() { }
-        public virtual void Step() { }
-        public virtual void Pass(int passId) { }
+        public virtual void Step(float deltaTime) { }
+        public virtual void Pass(int id, object? parameters) { }
         public virtual void Stop() { }
 
 

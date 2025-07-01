@@ -13,11 +13,11 @@ namespace ParkSimulator
     public class SimulatedScene
     {
         public int Seed { get; set; }
-        public int Steps { get{ return steps; } }
+        public float Time { get { return time; } }
 
         List<SimulatedObject> objects;
 
-        int steps;
+        float time;
 
         public SimulatedSceneState State { get; set; }
 
@@ -75,7 +75,7 @@ namespace ParkSimulator
         {
             Debug.Assert(State == SimulatedSceneState.linked, "Starting scene with storage references pending");
 
-            steps = 0;
+            time = 0;
 
             for (int i = 0; i < objects.Count; i++)
             {
@@ -97,14 +97,16 @@ namespace ParkSimulator
             State = SimulatedSceneState.linked;
         }
 
-        internal void Step()
+        internal void Step(float deltaTime)
         {
-            Debug.Assert(State == SimulatedSceneState.playing, "Stopping not playing scene");
+            Debug.Assert(State == SimulatedSceneState.playing, "Stepping not playing scene");
 
             for (int i = 0; i < objects.Count; i++)
             {
-                objects[i].Step();
+                objects[i].Step(deltaTime);
             }
+
+            time += deltaTime;
         }
 
         internal void UnlinkResources()

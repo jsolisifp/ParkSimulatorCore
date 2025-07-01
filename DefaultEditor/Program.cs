@@ -67,8 +67,10 @@ namespace ParkSimulator
         const int MenuSimulationOptionStep = 2;
         const int MenuSimulationOptionStop = 3;
         const int MenuSimulationBatchPlay = 4;
+        const int MenuSimulationSetStep = 5;
+        const int MenuSimulationSetWait = 6;
 
-        const int MenuSimulationOptionsCount = 4;
+        const int MenuSimulationOptionsCount = 6;
 
         const int MenuViewOptionObjects = 1;
         const int MenuViewOptionResources = 2;
@@ -83,7 +85,8 @@ namespace ParkSimulator
             Config config = new DefaultConfig();
 
             Storage storage = new DefaultStorage();
-            Render rendering = new DefaultRender();
+            //Render rendering = new DefaultRender();
+            Render rendering = new OpenglRender();
             Log log = new DefaultLog();
 
             Simulation.Init(config, storage, rendering, log);
@@ -95,6 +98,11 @@ namespace ParkSimulator
             // Selection
 
             SimulatedObject? selectedObject = null;
+
+            // Play
+
+            float simulationStep = 0.1f;
+            float simulationRate = 0.0f;
 
             // Save
 
@@ -330,7 +338,7 @@ namespace ParkSimulator
                 else if (menu == MenuId.simulation)
                 {
                     if (option == MenuSimulationOptionPlay) { Simulation.Play(); Simulation.RenderFrame(); menu = MenuId.main; }
-                    else if (option == MenuSimulationOptionStep) { Simulation.Step(); Simulation.RenderFrame(); }
+                    else if (option == MenuSimulationOptionStep) { Simulation.Step(simulationStep); Simulation.RenderFrame(); }
                     else if(option == MenuSimulationOptionStop) { Simulation.Stop(); menu = MenuId.main; }
                     else if(option == MenuSimulationBatchPlay)
                     {
@@ -338,11 +346,23 @@ namespace ParkSimulator
                         Simulation.Play();
                         Simulation.RenderFrame();
                         for(int i = 0; i < steps; i++)
-                        {   Simulation.Step();
+                        {   Simulation.Step(simulationStep);
                             Simulation.RenderFrame();
+
+                            if(simulationRate > 0) { Thread.Sleep((int)(1000 * (1 / simulationRate))); }
                         }
                         Simulation.Stop();
                         menu = MenuId.main;
+                    }
+                    else if(option == MenuSimulationSetStep)
+                    {
+                        Console.WriteLine("Current step: " + simulationStep);
+                        simulationStep = AskSingle("New step", 0.1f);
+                    }
+                    else if(option == MenuSimulationSetWait)
+                    {
+                        Console.WriteLine("Current rate: " + simulationRate + (simulationRate == 0 ? " (unlimited)" : ""));
+                        simulationRate = AskSingle("New rate", 1);
                     }
                     else if (option == MenuOptionBackOrQuit) { menu = MenuId.main; }
                 }
@@ -892,6 +912,8 @@ namespace ParkSimulator
                 Console.WriteLine("  [2]Step");
                 Console.WriteLine("  [3]Stop");
                 Console.WriteLine("  [4]Batch play");
+                Console.WriteLine("  [5]Set step");
+                Console.WriteLine("  [6]Set rate");
                 Console.WriteLine("  [0]Back");
             }
             else if (menu == MenuId.views)

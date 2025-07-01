@@ -59,7 +59,7 @@ namespace ParkSimulator
             if(referenceCounters[resourceId] == 0)
             {
                 // Unload resource
-                loaders[typeId].Unload(resourceId);
+                loaders[typeId].Unload(resourceId, loadedResources[resourceId]);
                 loadedResources.Remove(resourceId);
                 referenceCounters.Remove(resourceId);
             }

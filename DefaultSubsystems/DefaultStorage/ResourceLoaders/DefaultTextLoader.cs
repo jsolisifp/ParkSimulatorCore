@@ -23,7 +23,7 @@ namespace ParkSimulator
             Debug.Assert(typeof(string) == resource.GetType());
         }
 
-        public override void Unload(string id)
+        public override void Unload(string id, object resource)
         {
             // Nothing to do
         }

@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace ParkSimulator
 {
-    public enum TestAttractionType
+    public enum DefaultAttractionType
     {
         rollercoaster,
         bumperCars,
@@ -12,7 +12,7 @@ namespace ParkSimulator
 
     };
 
-    public enum TestAttractionMaintenanceType
+    public enum DefaultAttractionMaintenanceType
     {
         always,
         ifNeeded,
@@ -21,14 +21,14 @@ namespace ParkSimulator
 
     public class DefaultAttraction : Component
     {
-        public TestAttractionType Type { get; set; }
+        public DefaultAttractionType Type { get; set; }
         public Vector3 Coordinates { get; set; }
         public int Capacity { get; set; } = 10;
         public int Occupation { get; set; } = 0;
         public DefaultAttraction? Neighbour { get; set; }
         public ResourcePointer Description { get; set; }
         public int[] Valorations { get; set; } = new int[0];
-        public TestAttractionMaintenanceType[] MaintenanceSchedule { get; set; } = new TestAttractionMaintenanceType[0];
+        public DefaultAttractionMaintenanceType[] MaintenanceSchedule { get; set; } = new DefaultAttractionMaintenanceType[0];
         public DefaultAttraction[] Neighbours { get; set; } = new DefaultAttraction[0];
 
         public ResourcePointer[] Descriptions { get; set; } = new ResourcePointer[0];
@@ -40,11 +40,11 @@ namespace ParkSimulator
             Coordinates = new Vector3(0, 0, 0);
             Neighbour = null;
             Valorations = new int[] { 5, 4, 3, 2, 3, 4, 5, 6 };
-            MaintenanceSchedule = new TestAttractionMaintenanceType[] { TestAttractionMaintenanceType.always,
-                                                                        TestAttractionMaintenanceType.ifNeeded,
-                                                                        TestAttractionMaintenanceType.always,
-                                                                        TestAttractionMaintenanceType.never,
-                                                                        TestAttractionMaintenanceType.ifNeeded,
+            MaintenanceSchedule = new DefaultAttractionMaintenanceType[] { DefaultAttractionMaintenanceType.always,
+                                                                        DefaultAttractionMaintenanceType.ifNeeded,
+                                                                        DefaultAttractionMaintenanceType.always,
+                                                                        DefaultAttractionMaintenanceType.never,
+                                                                        DefaultAttractionMaintenanceType.ifNeeded,
                                                                       };
 
             Descriptions = new ResourcePointer[] { new ResourcePointer("attraction_a_description", "txt"),
@@ -58,7 +58,7 @@ namespace ParkSimulator
             neighbourLocation = Neighbour?.GetSimulatedObject()?.GetComponent<DefaultAttraction>();
         }
 
-        public override void Step()
+        public override void Step(float deltaTime)
         {
             Debug.Assert(Simulation.Random != null, "Simulacion no iniciada");
 

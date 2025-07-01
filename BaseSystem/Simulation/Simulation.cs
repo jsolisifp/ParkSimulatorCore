@@ -119,12 +119,6 @@ namespace ParkSimulator
 
         }
 
-        //public static bool IsSceneSaved()
-        //{
-        //    return sceneResourceId != null;
-        //}
-        
-
         public static void Play()
         {
             Debug.Assert(scene != null, "You must create a new scene or load one from storage before playing");
@@ -154,12 +148,12 @@ namespace ParkSimulator
 
         }
 
-        public static void Step()
+        public static void Step(float deltaTime)
         {
             Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
             Debug.Assert(scene != null, "You must create a new scene or load one from storage");
 
-            scene.Step();
+            scene.Step(deltaTime);
 
         }
 

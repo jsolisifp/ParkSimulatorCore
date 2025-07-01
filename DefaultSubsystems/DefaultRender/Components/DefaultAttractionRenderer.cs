@@ -23,7 +23,7 @@ namespace ParkSimulator
         {
         }
 
-        public override void Pass(int passId)
+        public override void Pass(int passId, object? parameters)
         {
             Debug.Assert(Simulation.Render != null, "La simulación no está iniciada");
             Debug.Assert(simulatedObject != null, "El componente no está añadido a un objeto");

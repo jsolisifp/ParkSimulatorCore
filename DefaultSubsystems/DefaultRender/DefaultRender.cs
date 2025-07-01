@@ -37,13 +37,13 @@ namespace ParkSimulator
 
         public override void Init(Config config)
         {
-            outputWidth = config.GetIntValue("renderOuputWidth", 320);
+            outputWidth = config.GetIntValue("renderOuputWidth", 200);
             outputHeight = config.GetIntValue("renderOutputHeight", 200);
             outputPath = config.GetTextValue("renderOutputPath", "Render\\");
 
-            clearColor.r = (byte)config.GetIntValue("renderClearColorR", 120);
-            clearColor.g = (byte)config.GetIntValue("renderClearColorG", 255);
-            clearColor.b = (byte)config.GetIntValue("renderClearColorB", 120);
+            clearColor.r = (byte)config.GetIntValue("renderClearColorR", 0);
+            clearColor.g = (byte)config.GetIntValue("renderClearColorG", 10);
+            clearColor.b = (byte)config.GetIntValue("renderClearColorB", 0);
 
             if(!Directory.Exists(outputPath)) { Directory.CreateDirectory(outputPath); }
 
@@ -147,7 +147,7 @@ namespace ParkSimulator
             var simObjects = Simulation.Scene.GetSimulatedObjects();
             foreach(SimulatedObject simObject in simObjects)
             {
-                simObject.Pass(0);
+                simObject.Pass(0, null);
             }
 
             int pixelDataRowSize = (int)MathF.Ceiling(3.0f * outputWidth / 4.0f) * 4;

@@ -22,7 +22,7 @@ namespace ParkSimulator
         public Vector3 Color { get; set; } = new Vector3(1, 1, 1);
 
         DefaultRender? render;
-        override public void Pass(int id)
+        override public void Pass(int id, object? parameters)
         {
             render ??= (DefaultRender?)Simulation.Render;
 
