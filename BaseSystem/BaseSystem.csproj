@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <Title>Park Simulator Core</Title>
     <AssemblyVersion>0.5.1.0</AssemblyVersion>
-	<VersionPrefix>1.0.4</VersionPrefix>
+	<VersionPrefix>1.0.9</VersionPrefix>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>ParkSimulator.$(AssemblyName)</PackageId>
     <PackageIcon>Icon.png</PackageIcon>

@@ -29,8 +29,11 @@ namespace ParkSimulator
         static Config? config;
         static Random? random;
 
+        static internal Object LockObject = new Object();
+
         static string? playingTemporarySceneResourceId;
         static SimulatedScene? playingPreviousScene;
+
 
         public static void Init(Config _config, Storage? _storage = null, Render? _rendering = null, Log? _log = null)
         {
@@ -51,6 +54,7 @@ namespace ParkSimulator
             scene.LinkResources();
 
             playingTemporarySceneResourceId = null;
+
         }
 
         public static void GetVersion(out int major, out int minor, out int build, out int revision)
@@ -67,145 +71,177 @@ namespace ParkSimulator
 
         public static void NewScene()
         {
-            Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
-            Debug.Assert(storage != null, "You must create a storage");
+            lock(LockObject)
+            {
+                Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
+                Debug.Assert(storage != null, "You must create a storage");
 
-            if(scene != null) { scene.UnlinkResources(); }
-            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+                if(scene != null) { scene.UnlinkResources(); }
+                if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
 
-            scene = new SimulatedScene();
-            sceneResourceId = null;
+                scene = new SimulatedScene();
+                sceneResourceId = null;
 
-            scene.LinkResources();
+                scene.LinkResources();
+
+            }
         }
 
         public static void LoadScene(string resourceId)
         {
-            Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
-            Debug.Assert(storage != null, "You must create a storage");
+            lock(Simulation.LockObject)
+            {
+                Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+                Debug.Assert(storage != null, "You must create a storage");
 
-            if(scene != null) { scene.UnlinkResources(); }
-            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+                if(scene != null) { scene.UnlinkResources(); }
+                if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
 
-            sceneResourceId = resourceId;
-            storage.AddReference(resourceId, Storage.typeIdScene);
-            scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
+                sceneResourceId = resourceId;
+                storage.AddReference(resourceId, Storage.typeIdScene);
+                scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
 
-            Debug.Assert(scene != null, "Cannot load scene resource");
+                Debug.Assert(scene != null, "Cannot load scene resource");
 
-            scene.LinkResources();
+                scene.LinkResources();
+            }
+
         }
 
         public static void SaveScene(ref string resourceId)
         {
-            Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
-            Debug.Assert(storage != null, "You must create a storage");
+            lock(LockObject)
+            {
+                Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+                Debug.Assert(storage != null, "You must create a storage");
 
-            scene.UnlinkResources();
+                scene.UnlinkResources();
 
-            if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
+                if(sceneResourceId != null) { storage.RemoveReference(sceneResourceId, Storage.typeIdScene); sceneResourceId = null; }
 
-            storage.SaveResource(ref resourceId, Storage.typeIdScene, scene);
+                storage.SaveResource(ref resourceId, Storage.typeIdScene, scene);
 
-            storage.AddReference(resourceId, Storage.typeIdScene);
-            scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
-            sceneResourceId = resourceId;
+                storage.AddReference(resourceId, Storage.typeIdScene);
+                scene = storage.GetLoadedResource<SimulatedScene>(resourceId);
+                sceneResourceId = resourceId;
 
-            Debug.Assert(scene != null, "Cannot load scene resource");
+                Debug.Assert(scene != null, "Cannot load scene resource");
 
-            scene.LinkResources();
+                scene.LinkResources();
 
+            }
         }
 
         public static void Play()
         {
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage before playing");
-            Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
-            Debug.Assert(storage != null, "Storage not present");
-            //Debug.Assert(sceneResourceId != null, "Scene must be saved before ");
+            lock(LockObject)
+            {
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage before playing");
+                Debug.Assert(state == SimulationState.stopped, "Simulation is not stopped");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+                Debug.Assert(storage != null, "Storage not present");
+                //Debug.Assert(sceneResourceId != null, "Scene must be saved before ");
 
-            scene.UnlinkResources();
+                scene.UnlinkResources();
 
-            playingPreviousScene = scene;
-            playingTemporarySceneResourceId = Guid.NewGuid().ToString();
-            storage.SaveResource(ref playingTemporarySceneResourceId, Storage.typeIdScene, scene);
+                playingPreviousScene = scene;
+                playingTemporarySceneResourceId = Guid.NewGuid().ToString();
+                storage.SaveResource(ref playingTemporarySceneResourceId, Storage.typeIdScene, scene);
 
-            storage.AddReference(playingTemporarySceneResourceId, Storage.typeIdScene);
-            scene = storage.GetLoadedResource<SimulatedScene>(playingTemporarySceneResourceId);
+                storage.AddReference(playingTemporarySceneResourceId, Storage.typeIdScene);
+                scene = storage.GetLoadedResource<SimulatedScene>(playingTemporarySceneResourceId);
 
-            Debug.Assert(scene != null, "Temporary scene not loaded");
+                Debug.Assert(scene != null, "Temporary scene not loaded");
 
-            scene.LinkResources();
+                scene.LinkResources();
 
-            random = new Random(scene.Seed);
+                random = new Random(scene.Seed);
 
-            scene.Start();
+                scene.Start();
 
-            state = SimulationState.playing;
+                state = SimulationState.playing;
+
+            }
 
         }
 
         public static void Step(float deltaTime)
         {
-            Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+            lock(LockObject)
+            {
+                Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
 
-            scene.Step(deltaTime);
+                scene.Step(deltaTime);
+
+            }
 
         }
 
         public static void Stop()
         {
-            Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
-            Debug.Assert(playingTemporarySceneResourceId != null, "Temporary playing scene not saved");
-            Debug.Assert(storage != null, "Storage not present");
+            lock(LockObject)
+            {
+                Debug.Assert(state == SimulationState.playing, "Simulation is not playing");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+                Debug.Assert(playingTemporarySceneResourceId != null, "Temporary playing scene not saved");
+                Debug.Assert(storage != null, "Storage not present");
 
-            scene.Stop();
+                scene.Stop();
 
-            scene.UnlinkResources();
+                scene.UnlinkResources();
 
-            storage.RemoveReference(playingTemporarySceneResourceId, Storage.typeIdScene);
+                storage.RemoveReference(playingTemporarySceneResourceId, Storage.typeIdScene);
 
-            scene = playingPreviousScene;
+                scene = playingPreviousScene;
 
-            Debug.Assert(scene != null);
+                Debug.Assert(scene != null);
 
-            scene.LinkResources();
+                scene.LinkResources();
 
-            state = SimulationState.stopped;
+                state = SimulationState.stopped;
+
+            }
+
         }
 
         public static void Finish()
         {
-            Debug.Assert(state == SimulationState.stopped, "Stop the simulation first");
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
-            Debug.Assert(storage != null, "You must create a storage");
+            lock(LockObject)
+            {
+                Debug.Assert(state == SimulationState.stopped, "Stop the simulation first");
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+                Debug.Assert(storage != null, "You must create a storage");
 
-            scene.UnlinkResources();
-            scene = null;
+                scene.UnlinkResources();
+                scene = null;
 
-            storage?.Finish();
-            storage = null;
+                storage?.Finish();
+                storage = null;
 
-            render?.Finish();
-            render = null;
+                render?.Finish();
+                render = null;
 
-            log?.Finish();
-            log = null;
+                log?.Finish();
+                log = null;
 
-            state = SimulationState.uninitialized;
+                state = SimulationState.uninitialized;
+
+            }
 
         }
 
         public static void RenderFrame()
         {
-            Debug.Assert(scene != null, "You must create a new scene or load one from storage");
+            lock(LockObject)
+            {
+                Debug.Assert(scene != null, "You must create a new scene or load one from storage");
 
-            render?.RenderFrame();
+                render?.RenderFrame();
+
+            }
 
         }
 

@@ -144,11 +144,12 @@ namespace ParkSimulator
             Debug.Assert(Simulation.Scene != null, "Simulación no iniciada");
 
             Clear();
-            var simObjects = Simulation.Scene.GetSimulatedObjects();
+            var simObjects = Simulation.Scene.LockSimulatedObjects();
             foreach(SimulatedObject simObject in simObjects)
             {
                 simObject.Pass(0, null);
             }
+            Simulation.Scene.UnlockSimulatedObjects();
 
             int pixelDataRowSize = (int)MathF.Ceiling(3.0f * outputWidth / 4.0f) * 4;
             int pixelDataSize = pixelDataRowSize * outputHeight;

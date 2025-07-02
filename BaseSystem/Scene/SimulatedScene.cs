@@ -29,31 +29,38 @@ namespace ParkSimulator
 
         public void AddSimulatedObject(SimulatedObject so)
         {
-            objects.Add(so);
-            so.AttachToScene(this);
-            so.componentRemovedEvent += OnComponentRemoved;
+            lock(Simulation.LockObject)
+            {
+                objects.Add(so);
+                so.AttachToScene(this);
+                so.componentRemovedEvent += OnComponentRemoved;
 
 
-            if(State == SimulatedSceneState.linked) { LinkObjectResources(so); }
-            else if(State == SimulatedSceneState.playing) { LinkObjectResources(so); so.Start(); }
+                if(State == SimulatedSceneState.linked) { LinkObjectResources(so); }
+                else if(State == SimulatedSceneState.playing) { LinkObjectResources(so); so.Start(); }
+            }
         }
 
         public void RemoveSimulatedObject(SimulatedObject so)
         {
-            if(State == SimulatedSceneState.linked) { UnlinkObjectResources(so); }
-            else if(State == SimulatedSceneState.playing) { so.Stop(); UnlinkObjectResources(so); }
-
-
-            var components = so.GetComponents();
-
-            for(int i = 0; i < components.Count; i++)
+            lock(Simulation.LockObject)
             {
-                OnComponentRemoved(components[i]);
-            }
+                if(State == SimulatedSceneState.linked) { UnlinkObjectResources(so); }
+                else if(State == SimulatedSceneState.playing) { so.Stop(); UnlinkObjectResources(so); }
 
-            so.componentRemovedEvent -= OnComponentRemoved;
-            so.DetachFromScene();
-            objects.Remove(so);
+                var components = so.LockComponents();
+
+                for(int i = 0; i < components.Count; i++)
+                {
+                    OnComponentRemoved(components[i]);
+                }
+
+                so.componentRemovedEvent -= OnComponentRemoved;
+                so.DetachFromScene();
+                objects.Remove(so);
+
+                so.UnlockComponents();
+            }
         }
 
         internal void LinkResources()
@@ -125,18 +132,40 @@ namespace ParkSimulator
             State = SimulatedSceneState.unlinked;
         }
 
-        public ReadOnlyCollection<SimulatedObject> GetSimulatedObjects()
+        public ReadOnlyCollection<SimulatedObject>? TryLockSimulatedObjects()
         {
+            if(Monitor.TryEnter(Simulation.LockObject))
+            {
+                return objects.AsReadOnly<SimulatedObject>();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public ReadOnlyCollection<SimulatedObject> LockSimulatedObjects()
+        {
+            Monitor.Enter(Simulation.LockObject);
+
             return objects.AsReadOnly<SimulatedObject>();
+        }
+
+        public void UnlockSimulatedObjects()
+        {
+            Monitor.Exit(Simulation.LockObject);
         }
 
         internal void LinkObjectResources(SimulatedObject o)
         {
-            var components = o.GetComponents();
+            var components = o.LockComponents();
+
             for (int j = 0; j < components.Count; j++)
             {
                 LinkComponentResources(components[j]);
             }
+
+            o.UnlockComponents();
 
         }
 
@@ -186,15 +215,18 @@ namespace ParkSimulator
 
         void UnlinkObjectResources(SimulatedObject o)
         {
-            var components = o.GetComponents();
+            var components = o.LockComponents();
+
             for (int j = 0; j < components.Count; j++)
             {
                 UnlinkComponentResources(components[j]);
             }
 
+            o.UnlockComponents();
+
         }
 
-        public void UnlinkComponentResources(Component c)
+        internal void UnlinkComponentResources(Component c)
         {
             var fields = c.GetFieldsInfo();
 
@@ -233,7 +265,7 @@ namespace ParkSimulator
 
             for(int i = 0; i < objects.Count; i++)
             {
-                var components = objects[i].GetComponents();
+                var components = objects[i].LockComponents();
 
                 for (int j = 0; j < components.Count; j++)
                 {
@@ -267,6 +299,8 @@ namespace ParkSimulator
 
                     }
                 }
+
+                objects[i].UnlockComponents();
             }
 
 
@@ -280,7 +314,7 @@ namespace ParkSimulator
 
             for(int i = 0; i < objects.Count; i++)
             {
-                var components = objects[i].GetComponents();
+                var components = objects[i].LockComponents();
 
                 for(int j = 0; j < components.Count; j++)
                 {
@@ -339,6 +373,8 @@ namespace ParkSimulator
                     }
 
                 }
+
+                objects[i].UnlockComponents();
             }
         }
 

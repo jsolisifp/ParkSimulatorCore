@@ -189,25 +189,31 @@ namespace ParkSimulator
 
         public unsafe void OnRender(double deltaTime)
         {
-            context.Enable(EnableCap.DepthTest);
-            context.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, 1.0f);
-            context.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            // Override view
-
-            onOverrideView?.Invoke(ref viewMatrix, ref projectionMatrix);
-
             // Renderizar los objetos
 
-            var simObjects = Simulation.Scene.GetSimulatedObjects();
-            foreach(SimulatedObject o in simObjects)
+            var simObjects = Simulation.Scene.TryLockSimulatedObjects();
+
+            if(simObjects != null)
             {
-                o.Pass(0, null);
+                context.Enable(EnableCap.DepthTest);
+                context.ClearColor(clearColor.X, clearColor.Y, clearColor.Z, 1.0f);
+                context.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+                // Override view
+
+                onOverrideView?.Invoke(ref viewMatrix, ref projectionMatrix);
+
+                foreach(SimulatedObject o in simObjects)
+                {
+                    o.Pass(0, null);
+                }
+
+                // Renderizar los overlays
+
+                onRenderOverlay?.Invoke((float)deltaTime);
+
+                Simulation.Scene.UnlockSimulatedObjects();
             }
-
-            // Renderizar los overlays
-
-            onRenderOverlay?.Invoke((float)deltaTime);
 
         }
 

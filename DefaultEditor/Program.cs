@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Numerics;
 
 namespace ParkSimulator
@@ -213,7 +214,13 @@ namespace ParkSimulator
                     else if (option == MenuObjectOptionDelete)
                     {
                         Debug.Assert(Simulation.Scene != null, "Scene not assigned");
-                        if(Simulation.Scene.GetSimulatedObjects().Count > 0)
+
+                        int simObjectsCount = 0;
+                        var simObjects = Simulation.Scene.LockSimulatedObjects();
+                        simObjectsCount = simObjects.Count;
+                        Simulation.Scene.UnlockSimulatedObjects();
+
+                        if(simObjectsCount > 0)
                         { 
                             SimulatedObject? target = AskObject("Object");
                             if(target != null)
@@ -675,7 +682,7 @@ namespace ParkSimulator
             bool done = false;
             while(!done)
             {
-                var components = simObject.GetComponents();
+                var components = simObject.LockComponents();
 
                 for(int i = 0; i < components.Count; i++)
                 {
@@ -691,6 +698,8 @@ namespace ParkSimulator
                     else { Console.WriteLine("Please enter a numeric index between " + 1 + " and " + components.Count + " (both included)"); }
                 }
                 else { Console.WriteLine("Please enter a numeric index");  }
+
+                simObject.UnlockComponents();
             }
 
             return r;
@@ -707,7 +716,7 @@ namespace ParkSimulator
 
             while(!done)
             {
-                var objects = Simulation.Scene.GetSimulatedObjects();
+                var objects = Simulation.Scene.LockSimulatedObjects();
 
                 for(int i = 0; i < objects.Count; i++)
                 {
@@ -730,6 +739,8 @@ namespace ParkSimulator
                     else { Console.WriteLine("Please enter a numeric index between " + 1 + " and " + objects.Count + " (both included)"); }
                 }
                 else { Console.WriteLine("Please enter a numeric index");  }
+
+                Simulation.Scene.UnlockSimulatedObjects();
             }
 
             return r;
@@ -825,19 +836,19 @@ namespace ParkSimulator
             Console.WriteLine(" State : " + Simulation.State);
         }
 
-        static void ShowProperties(SimulatedObject? simuObject)
+        static void ShowProperties(SimulatedObject? simObject)
         {
             Console.WriteLine(",--------------------,");
             Console.WriteLine("|     Properties      |");
             Console.WriteLine("`-------------------`");
 
-            if(simuObject == null) { Console.WriteLine(" None"); }
+            if(simObject == null) { Console.WriteLine(" None"); }
             else
             {
-                Console.WriteLine(" Name : " + simuObject.Name);
-                Console.WriteLine(" Active : " + simuObject.Active);
+                Console.WriteLine(" Name : " + simObject.Name);
+                Console.WriteLine(" Active : " + simObject.Active);
 
-                var components = simuObject.GetComponents();
+                var components = simObject.LockComponents();
                 for(int i = 0; i < components.Count; i++)
                 {
                     Component c = components[i];
@@ -850,6 +861,8 @@ namespace ParkSimulator
                         Console.WriteLine("  " + f.name + " : " + f.type + " : " + value + (!f.isWritable ? " : [READONLY]" : ""));
                     }
                 }
+
+                simObject.UnlockComponents();
             }
         }
 
@@ -934,12 +947,14 @@ namespace ParkSimulator
             Console.WriteLine("| Simulated Objects |");
             Console.WriteLine("`-------------------`");
 
-            var objects = Simulation.Scene.GetSimulatedObjects();
+            var objects = Simulation.Scene.LockSimulatedObjects();
 
             for(int i = 0; i < objects.Count; i++)
             {
                 Console.WriteLine(" : " + objects[i].Name + (objects[i].Active ? "[v]" : "[x]"));
             }
+
+            Simulation.Scene.UnlockSimulatedObjects();
 
         }
 

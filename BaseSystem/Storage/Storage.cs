@@ -23,14 +23,34 @@ namespace ParkSimulator
             referenceCounters = new Dictionary<string, int>();
         }
 
-        public void RegisterLoader(string typeId, ResourceLoader loader) { loaders[typeId] = loader; }
-        public void UnregisterLoader(string typeId) { loaders.Remove(typeId); }
+        public void RegisterLoader(string typeId, ResourceLoader loader)
+        {
+            lock(Simulation.LockObject)
+            {
+                loaders[typeId] = loader;
+            }
+
+        }
+
+        public void UnregisterLoader(string typeId)
+        {
+            lock(Simulation.LockObject)
+            {
+                loaders.Remove(typeId);
+            }
+
+        }
 
         public int GetReferenceCount(string resourceId)
         {
-            int count = 0;
-            if(referenceCounters.ContainsKey(resourceId)) { count = referenceCounters[resourceId]; }
-            return count;
+            lock(Simulation.LockObject)
+            {
+                int count = 0;
+                if(referenceCounters.ContainsKey(resourceId)) { count = referenceCounters[resourceId]; }
+
+                return count;
+            }
+
         }
 
         internal void AddReference(string resourceId, string typeId)
@@ -48,41 +68,53 @@ namespace ParkSimulator
                 // Add a new reference
                 referenceCounters[resourceId] ++;
             }
-
         }
 
         internal void RemoveReference(string resourceId, string typeId)
         {
-            Debug.Assert(referenceCounters.ContainsKey(resourceId), "Unbalanced remove reference for resource " + resourceId);
-            referenceCounters[resourceId] --;
-
-            if(referenceCounters[resourceId] == 0)
+            lock(Simulation.LockObject)
             {
-                // Unload resource
-                loaders[typeId].Unload(resourceId, loadedResources[resourceId]);
-                loadedResources.Remove(resourceId);
-                referenceCounters.Remove(resourceId);
+                Debug.Assert(referenceCounters.ContainsKey(resourceId), "Unbalanced remove reference for resource " + resourceId);
+                referenceCounters[resourceId] --;
+
+                if(referenceCounters[resourceId] == 0)
+                {
+                    // Unload resource
+                    loaders[typeId].Unload(resourceId, loadedResources[resourceId]);
+                    loadedResources.Remove(resourceId);
+                    referenceCounters.Remove(resourceId);
+                }
+
             }
         }
 
 
         public T? GetLoadedResource<T>(string resourceId)
         {
-            return (T?)loadedResources[resourceId];
+            lock(Simulation.LockObject)
+            {
+                return (T?)loadedResources[resourceId];
+            }
         }
 
         public void SaveResource(ref string resourceId, string typeId, object resource)
         {
-            loaders[typeId].Save(ref resourceId, resource);
+            lock(Simulation.LockObject)
+            {
+                loaders[typeId].Save(ref resourceId, resource);
+            }
         }
 
         public void DeleteResource(string resourceId, string typeId)
         {
-            ResourceDeletedEvent?.Invoke(resourceId, typeId);
+            lock(Simulation.LockObject)
+            {
+                ResourceDeletedEvent?.Invoke(resourceId, typeId);
 
-            Debug.Assert(!loadedResources.ContainsKey(resourceId), "Resource is loaded, remove all references before deleting it");
+                Debug.Assert(!loadedResources.ContainsKey(resourceId), "Resource is loaded, remove all references before deleting it");
 
-            loaders[typeId].Delete(resourceId);
+                loaders[typeId].Delete(resourceId);
+            }
         }
 
         public abstract bool ExistsResource(string resourceId, string typeId);

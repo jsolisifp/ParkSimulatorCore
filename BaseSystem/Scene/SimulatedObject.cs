@@ -33,22 +33,22 @@ namespace ParkSimulator
 
         }
 
-        public void AttachToScene(SimulatedScene _scene)
+        internal void AttachToScene(SimulatedScene _scene)
         {
             scene = _scene;
         }
 
-        public void DetachFromScene()
+        internal void DetachFromScene()
         {
             scene = null;
         }
 
-        public SimulatedScene? GetAttachedScene()
+        internal SimulatedScene? GetAttachedScene()
         {
             return scene;
         }
 
-        public void Start()
+        internal void Start()
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when started");
 
@@ -58,7 +58,7 @@ namespace ParkSimulator
             }
         }
 
-        public void Stop()
+        internal void Stop()
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when stopped");
 
@@ -68,7 +68,7 @@ namespace ParkSimulator
             }
         }
 
-        public void Step(float deltaTime)
+        internal void Step(float deltaTime)
         {
             Debug.Assert(scene != null, "Simulated Object not attached to scene when stepped");
 
@@ -80,123 +80,149 @@ namespace ParkSimulator
 
         public void Pass(int passId, object? parameters)
         {
-            Debug.Assert(scene != null, "Simulated Object not attached to scene when pass");
-
-            for (int i = 0; i < components.Count; i++)
+            lock(Simulation.LockObject)
             {
-                components[i].Pass(passId, parameters);
+                Debug.Assert(scene != null, "Simulated Object not attached to scene when pass");
+
+                for (int i = 0; i < components.Count; i++)
+                {
+                    components[i].Pass(passId, parameters);
+                }
             }
         }
 
         public void AddComponent(Component c)
         {
-            components.Add(c);
-            c.AttachToSimulatedObject(this);
-
-            if(scene != null)
+            lock(Simulation.LockObject)
             {
-                if(scene.State == SimulatedSceneState.linked) { scene.LinkComponentResources(c); }
-                else if(scene.State == SimulatedSceneState.playing) { scene.LinkComponentResources(c); c.Start(); }
-            }
+                components.Add(c);
+                c.AttachToSimulatedObject(this);
 
+                if(scene != null)
+                {
+                    if(scene.State == SimulatedSceneState.linked) { scene.LinkComponentResources(c); }
+                    else if(scene.State == SimulatedSceneState.playing) { scene.LinkComponentResources(c); c.Start(); }
+                }
+
+            }
         }
 
         public void RemoveComponent(Component c)
         {
-            if(scene != null)
+            lock(Simulation.LockObject)
             {
-                if(scene.State == SimulatedSceneState.linked) { scene.UnlinkComponentResources(c); }
-                else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnlinkComponentResources(c); }
+                if(scene != null)
+                {
+                    if(scene.State == SimulatedSceneState.linked) { scene.UnlinkComponentResources(c); }
+                    else if(scene.State == SimulatedSceneState.playing) { c.Stop(); scene.UnlinkComponentResources(c); }
+                }
+
+                componentRemovedEvent?.Invoke(c);
+
+                components.Remove(c);
+                c.DetachFromSimulatedObject();
+
             }
-
-            componentRemovedEvent?.Invoke(c);
-
-            components.Remove(c);
-            c.DetachFromSimulatedObject();
         }
 
-        public ReadOnlyCollection<Component> GetComponents()
+        public ReadOnlyCollection<Component> LockComponents()
         {
+            Monitor.Enter(Simulation.LockObject);
+
             return components.AsReadOnly<Component>();
+        }
+
+        public void UnlockComponents()
+        {
+            Monitor.Exit(Simulation.LockObject);
         }
 
         public T? GetComponent<T>() where T: Component
         {
-            T? c = (T?)components.Find((c) => c.GetType() == typeof(T));
+            lock(Simulation.LockObject)
+            {
+                T? c = (T?)components.Find((c) => c.GetType() == typeof(T));
 
-            return c;
+                return c;
+            }
         }
 
         public static ReadOnlyCollection<ComponentInfo> GetComponentsInfo()
         {
-            List<ComponentInfo> components = new();
-
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            for(int k = 0; k < assemblies.Length; k ++)
+            lock(Simulation.LockObject)
             {
-                Assembly? a = assemblies[k];
+                List<ComponentInfo> components = new();
 
-                Debug.Assert(a != null, "No se encuentra el ensamblado");
+                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-                Type[] types = a.GetTypes();
-
-                for (int i = 0; i < types.Length; i++)
+                for(int k = 0; k < assemblies.Length; k ++)
                 {
-                    Type t = types[i];
+                    Assembly? a = assemblies[k];
 
-                    if (t.IsSubclassOf(typeof(Component)))
+                    Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                    Type[] types = a.GetTypes();
+
+                    for (int i = 0; i < types.Length; i++)
                     {
-                        ComponentInfo c = new();
-                        c.name = t.Name;
-                        c.fullName = t.FullName;
-                        components.Add(c);
+                        Type t = types[i];
 
+                        if (t.IsSubclassOf(typeof(Component)))
+                        {
+                            ComponentInfo c = new();
+                            c.name = t.Name;
+                            c.fullName = t.FullName;
+                            components.Add(c);
+
+                        }
                     }
+
                 }
 
+
+                return components.AsReadOnly<ComponentInfo>();
             }
-
-
-            return components.AsReadOnly<ComponentInfo>();
         }
 
         public static Component CreateComponentByName(string name)
         {
-            Component? r = null;
-
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            for(int k = 0; k < assemblies.Length; k ++)
+            lock(Simulation.LockObject)
             {
-                Assembly? a = assemblies[k];
+                Component? r = null;
 
-                Debug.Assert(a != null, "No se encuentra el ensamblado");
+                Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-                Type[] types = a.GetTypes();
-
-                for (int i = 0; i < types.Length; i++)
+                for(int k = 0; k < assemblies.Length; k ++)
                 {
-                    Type t = types[i];
+                    Assembly? a = assemblies[k];
 
-                    if (t.IsSubclassOf(typeof(Component)))
+                    Debug.Assert(a != null, "No se encuentra el ensamblado");
+
+                    Type[] types = a.GetTypes();
+
+                    for (int i = 0; i < types.Length; i++)
                     {
-                        if(t.Name == name)
+                        Type t = types[i];
+
+                        if (t.IsSubclassOf(typeof(Component)))
                         {
-                            object? o = Activator.CreateInstance(t);
+                            if(t.Name == name)
+                            {
+                                object? o = Activator.CreateInstance(t);
 
-                            Debug.Assert(o != null, "No se puede crear un objeto de tipo " + name);
+                                Debug.Assert(o != null, "No se puede crear un objeto de tipo " + name);
 
-                            r = (Component)o;
+                                r = (Component)o;
+                            }
                         }
                     }
+
                 }
 
+                Debug.Assert(r != null, "No existe ningún tipo de componente llamado " + name);
+
+                return r;
             }
-
-            Debug.Assert(r != null, "No existe ningún tipo de componente llamado " + name);
-
-            return r;
 
         }
     }

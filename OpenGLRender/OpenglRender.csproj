@@ -7,7 +7,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>ParkSimulator.$(AssemblyName)</PackageId>
-    <VersionPrefix>1.0.4</VersionPrefix>
+    <VersionPrefix>1.0.7</VersionPrefix>
 	  <PackageIcon>Icon.png</PackageIcon>
   </PropertyGroup>
 

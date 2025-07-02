@@ -32,19 +32,21 @@ namespace ParkSimulator
 
             Dictionary<Component, int> componentToId = new();
 
-            var simObjects = scene.GetSimulatedObjects();
+            var simObjects = scene.LockSimulatedObjects();
 
             // Generate ids for components
 
             for (int i = 0; i < simObjects.Count; i++)
             {
-                var components = simObjects[i].GetComponents();
+                var components = simObjects[i].LockComponents();
 
                 for (int j = 0; j < components.Count; j++)
                 {
                     componentToId[components[j]] = nextComponentId;
                     nextComponentId++;
                 }
+
+                simObjects[i].UnlockComponents();
             }
 
             // Generate string
@@ -59,7 +61,7 @@ namespace ParkSimulator
                 builder.AppendLine(tab + "Name:" + simObject.Name);
                 builder.AppendLine(tab + "Active:" + SerializeBool(simObject.Active));
 
-                var components = simObject.GetComponents();
+                var components = simObject.LockComponents();
 
                 builder.AppendLine(tab + "ComponentsCount:" + SerializeInt32(components.Count));
 
@@ -127,8 +129,12 @@ namespace ParkSimulator
                     }
                 }
 
+                simObject.UnlockComponents();
+
 
             }
+
+            scene.UnlockSimulatedObjects();
 
             return builder.ToString();
 

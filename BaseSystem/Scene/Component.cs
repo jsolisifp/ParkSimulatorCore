@@ -103,81 +103,96 @@ namespace ParkSimulator
 
         public ReadOnlyCollection<ComponentFieldInfo> GetFieldsInfo()
         {
-            List<ComponentFieldInfo> fields = new();
-
-            for (int i = 0; i < properties.Length; i++)
+            lock(Simulation.LockObject)
             {
-                PropertyInfo p = properties[i];
-                ComponentFieldInfo f = new();
-                f.name = p.Name;
-                f.type = p.PropertyType.Name;
-                f.isEnum = p.PropertyType.IsEnum;
-                f.isResourcePointer = (p.PropertyType.Name == typeof(ResourcePointer).Name);
-                f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
-                f.isWritable = p.CanWrite;
-                f.isArray = p.PropertyType.IsArray;
+                List<ComponentFieldInfo> fields = new();
 
-                Type? elementType = p.PropertyType.GetElementType();
-
-                if(elementType != null)
+                for (int i = 0; i < properties.Length; i++)
                 {
-                    f.arrayElementType = elementType.Name;
-                    f.arrayElementIsEnum = elementType.IsEnum;
-                    f.arrayElementIsComponent = elementType.IsSubclassOf(typeof(Component));
-                    f.arrayElementIsResourcePointer = (elementType.Name == "ResourcePointer");
+                    PropertyInfo p = properties[i];
+                    ComponentFieldInfo f = new();
+                    f.name = p.Name;
+                    f.type = p.PropertyType.Name;
+                    f.isEnum = p.PropertyType.IsEnum;
+                    f.isResourcePointer = (p.PropertyType.Name == typeof(ResourcePointer).Name);
+                    f.isComponent = p.PropertyType.IsSubclassOf(typeof(Component));
+                    f.isWritable = p.CanWrite;
+                    f.isArray = p.PropertyType.IsArray;
+
+                    Type? elementType = p.PropertyType.GetElementType();
+
+                    if(elementType != null)
+                    {
+                        f.arrayElementType = elementType.Name;
+                        f.arrayElementIsEnum = elementType.IsEnum;
+                        f.arrayElementIsComponent = elementType.IsSubclassOf(typeof(Component));
+                        f.arrayElementIsResourcePointer = (elementType.Name == "ResourcePointer");
+                    }
+
+                    fields.Add(f);
                 }
 
-                fields.Add(f);
+                return fields.AsReadOnly<ComponentFieldInfo>();
             }
-
-            return fields.AsReadOnly<ComponentFieldInfo>();
         }
 
         public T? GetFieldValue<T>(string name)
         {
-            return (T?)propertiesByName[name].GetValue(this);
+            lock(Simulation.LockObject)
+            {
+                return (T?)propertiesByName[name].GetValue(this);
+            }
         }
 
         public int GetFieldArrayLength(string name)
         {
-            Array? array = (Array?)propertiesByName[name].GetValue(this);
-            Debug.Assert(array != null, "Field is not an array");
-            return array.Length;
+            lock(Simulation.LockObject)
+            {
+                Array? array = (Array?)propertiesByName[name].GetValue(this);
+                Debug.Assert(array != null, "Field is not an array");
+                return array.Length;
+            }
         }
 
         public T? GetFieldArrayValue<T>(string name, int index)
         {
-            Array? array = (Array)propertiesByName[name].GetValue(this);
-            return (T?)array.GetValue(index);
+            lock(Simulation.LockObject)
+            {
+                Array? array = (Array)propertiesByName[name].GetValue(this);
+                return (T?)array.GetValue(index);
+            }
         }
 
         public void SetFieldValue<T>(string name, T? value, bool manageResourceLinking = true)
         {            
-            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
-
-            if (simScene != null && manageResourceLinking)
+            lock(Simulation.LockObject)
             {
-                if (simScene.State != SimulatedSceneState.unlinked)
+                SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+                if (simScene != null && manageResourceLinking)
                 {
-                    if (value != null && value.GetType().Name == "ResourcePointer")
+                    if (simScene.State != SimulatedSceneState.unlinked)
                     {
-                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
-                        p.UnlinkResource();
+                        if (value != null && value.GetType().Name == "ResourcePointer")
+                        {
+                            ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                            p.UnlinkResource();
+                        }
                     }
                 }
-            }
 
-            propertiesByName[name].SetValue(this, value);
+                propertiesByName[name].SetValue(this, value);
 
-            if (simScene != null && manageResourceLinking)
-            {
-                if (simScene.State != SimulatedSceneState.unlinked)
+                if (simScene != null && manageResourceLinking)
                 {
-                    if (value != null && value.GetType().Name == "ResourcePointer")
+                    if (simScene.State != SimulatedSceneState.unlinked)
                     {
-                        ResourcePointer p = GetFieldValue<ResourcePointer>(name);
-                        p.LinkResource();
-                        propertiesByName[name].SetValue(this, p);
+                        if (value != null && value.GetType().Name == "ResourcePointer")
+                        {
+                            ResourcePointer p = GetFieldValue<ResourcePointer>(name);
+                            p.LinkResource();
+                            propertiesByName[name].SetValue(this, p);
+                        }
                     }
                 }
             }
@@ -186,103 +201,110 @@ namespace ParkSimulator
 
         public void SetFieldArrayValue<T>(string name, int index, T? value, bool manageResourceLinking = true)
         {
-            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
-
-            if(simScene != null && manageResourceLinking)
+            lock(Simulation.LockObject)
             {
-                if(simScene.State != SimulatedSceneState.unlinked)
+                SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+                if(simScene != null && manageResourceLinking)
                 {
-                    if(value != null && value.GetType().Name == "ResourcePointer")
+                    if(simScene.State != SimulatedSceneState.unlinked)
                     {
-                        ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
-                        p.UnlinkResource();                                        
+                        if(value != null && value.GetType().Name == "ResourcePointer")
+                        {
+                            ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
+                            p.UnlinkResource();                                        
+                        }
+                    }
+                }
+
+                Array? a = (Array?)propertiesByName[name].GetValue(this);
+                Debug.Assert(a != null);            
+                a.SetValue(value, index);
+
+                propertiesByName[name].SetValue(this, a);
+
+                if(simScene != null && manageResourceLinking)
+                {
+                    if(simScene.State != SimulatedSceneState.unlinked)
+                    {
+                        if(value != null && value.GetType().Name == "ResourcePointer")
+                        {
+                            ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
+                            p.LinkResource();                                        
+
+                            a = (Array?)propertiesByName[name].GetValue(this);
+                            Debug.Assert(a != null);            
+                            a.SetValue(p, index);
+                            propertiesByName[name].SetValue(this, a);
+                        }
                     }
                 }
             }
-
-            Array? a = (Array?)propertiesByName[name].GetValue(this);
-            Debug.Assert(a != null);            
-            a.SetValue(value, index);
-
-            propertiesByName[name].SetValue(this, a);
-
-            if(simScene != null && manageResourceLinking)
-            {
-                if(simScene.State != SimulatedSceneState.unlinked)
-                {
-                    if(value != null && value.GetType().Name == "ResourcePointer")
-                    {
-                        ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, index);
-                        p.LinkResource();                                        
-
-                        a = (Array?)propertiesByName[name].GetValue(this);
-                        Debug.Assert(a != null);            
-                        a.SetValue(p, index);
-                        propertiesByName[name].SetValue(this, a);
-                    }
-                }
-            }
-
         }
 
         public void AddFieldArrayElements(string name, int index, int count)
         {
-            Array? a = (Array?)propertiesByName[name].GetValue(this);
+            lock(Simulation.LockObject)
+            {
+                Array? a = (Array?)propertiesByName[name].GetValue(this);
 
-            Debug.Assert(a != null, "Property is not an array");
+                Debug.Assert(a != null, "Property is not an array");
 
-            Type? elementType = propertiesByName[name].PropertyType.GetElementType();
+                Type? elementType = propertiesByName[name].PropertyType.GetElementType();
 
-            Debug.Assert(elementType != null, "Cannot get element type");
+                Debug.Assert(elementType != null, "Cannot get element type");
 
-            Array newA = Array.CreateInstance(elementType, a.Length + count);
+                Array newA = Array.CreateInstance(elementType, a.Length + count);
 
-            for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
+                for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
 
-            for(int i = index + count; i < a.Length + count; i++)  { newA.SetValue(a.GetValue(i - count), i); }
+                for(int i = index + count; i < a.Length + count; i++)  { newA.SetValue(a.GetValue(i - count), i); }
 
-            propertiesByName[name].SetValue(this, newA);
-            
+                propertiesByName[name].SetValue(this, newA);
+            }            
 
         }
 
         public void RemoveFieldArrayElements(string name, int index, int count, bool manageResourceLinking = true)
         {
-            Array? a = (Array?)propertiesByName[name].GetValue(this);
-
-            SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
-
-            if(simScene != null && manageResourceLinking)
+            lock(Simulation.LockObject)
             {
-                if(simScene.State != SimulatedSceneState.unlinked)
+                Array? a = (Array?)propertiesByName[name].GetValue(this);
+
+                SimulatedScene? simScene = simulatedObject?.GetAttachedScene();
+
+                if(simScene != null && manageResourceLinking)
                 {
-                    for(int i = index; i < index + count; i++)
+                    if(simScene.State != SimulatedSceneState.unlinked)
                     {
-                        object? value = a.GetValue(i);
-
-                        if(value != null && value.GetType().Name == "ResourcePointer")
+                        for(int i = index; i < index + count; i++)
                         {
-                            ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, i);
-                            p.UnlinkResource();                                        
-                        }
+                            object? value = a.GetValue(i);
 
+                            if(value != null && value.GetType().Name == "ResourcePointer")
+                            {
+                                ResourcePointer p = GetFieldArrayValue<ResourcePointer>(name, i);
+                                p.UnlinkResource();                                        
+                            }
+
+                        }
                     }
                 }
+
+                Debug.Assert(a != null, "Property is not an array");
+
+                Type? elementType = propertiesByName[name].PropertyType.GetElementType();
+
+                Debug.Assert(elementType != null, "Cannot get element type");
+
+                Array newA = Array.CreateInstance(elementType, a.Length - count);
+
+                for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
+
+                for(int i = index + count; i < a.Length; i++)  { newA.SetValue(a.GetValue(i), i - count); }
+
+                propertiesByName[name].SetValue(this, newA);
             }
-
-            Debug.Assert(a != null, "Property is not an array");
-
-            Type? elementType = propertiesByName[name].PropertyType.GetElementType();
-
-            Debug.Assert(elementType != null, "Cannot get element type");
-
-            Array newA = Array.CreateInstance(elementType, a.Length - count);
-
-            for(int i = 0; i < index; i++) { newA.SetValue(a.GetValue(i), i); }
-
-            for(int i = index + count; i < a.Length; i++)  { newA.SetValue(a.GetValue(i), i - count); }
-
-            propertiesByName[name].SetValue(this, newA);
         }
 
         public virtual void Start() { }
@@ -303,7 +325,10 @@ namespace ParkSimulator
 
         public SimulatedObject? GetSimulatedObject()
         {
-            return simulatedObject;
+            lock(Simulation.LockObject)
+            {
+                return simulatedObject;
+            }
         }
 
     }
